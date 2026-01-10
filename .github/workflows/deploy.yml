@@ -1,0 +1,170 @@
+# Deploy Pipeline - Deploy to Azure
+# Deploys infrastructure and application on push to main
+
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+env:
+  AZURE_RESOURCE_GROUP: greedy-rg-${{ github.event.inputs.environment || 'dev' }}
+
+jobs:
+  # Build job - reuses CI logic
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+            client/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd server && npm ci
+          cd ../client && npm ci
+
+      - name: Build server
+        run: cd server && npm run build
+
+      - name: Build client
+        env:
+          VITE_API_URL: ${{ vars.API_URL || '' }}
+          VITE_AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || '' }}
+          VITE_AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID || '' }}
+        run: cd client && npm run build
+
+      - name: Prepare server deployment package
+        run: |
+          cd server
+          mkdir -p deploy
+          cp -r dist deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cd deploy && npm ci --omit=dev
+
+      - name: Upload client artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist/
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-deploy
+          path: server/deploy/
+
+  # Deploy Infrastructure
+  deploy-infrastructure:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ needs.build.outputs.environment }}
+    outputs:
+      appServiceName: ${{ steps.deploy.outputs.appServiceName }}
+      staticWebAppName: ${{ steps.deploy.outputs.staticWebAppName }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az group create \
+              --name ${{ env.AZURE_RESOURCE_GROUP }} \
+              --location eastus
+
+      - name: Deploy Bicep
+        id: deploy
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ./infrastructure/main.bicep
+          parameters: ./infrastructure/parameters.${{ needs.build.outputs.environment }}.json
+          failOnStdErr: false
+
+  # Deploy Server to App Service
+  deploy-server:
+    needs: [build, deploy-infrastructure]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.build.outputs.environment }}
+
+    steps:
+      - name: Download server artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: server-deploy
+          path: server-deploy
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ needs.deploy-infrastructure.outputs.appServiceName }}
+          package: server-deploy
+
+  # Deploy Client to Static Web App
+  deploy-client:
+    needs: [build, deploy-infrastructure]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.build.outputs.environment }}
+
+    steps:
+      - name: Download client artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-dist
+          path: client-dist
+
+      - name: Deploy to Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: 'client-dist'
+          skip_app_build: true
+          skip_api_build: true
