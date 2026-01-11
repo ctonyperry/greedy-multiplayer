@@ -41,18 +41,38 @@ function AppContent() {
   const [showHelp, setShowHelp] = useState(false);
   const [gameMode, setGameMode] = useState<GameMode>('offline');
   const [gameCode, setGameCode] = useState<string | null>(null);
+  const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
 
   // Set up token getter for API service
   useEffect(() => {
     setTokenGetter(getAccessToken);
   }, [getAccessToken]);
 
-  // Navigate to home when user becomes authenticated
+  // Parse join code from URL on mount
   useEffect(() => {
-    if (isAuthenticated && screen === 'start') {
+    const params = new URLSearchParams(window.location.search);
+    const joinCode = params.get('join');
+    if (joinCode && /^[A-Z0-9]{6}$/i.test(joinCode)) {
+      setPendingJoinCode(joinCode.toUpperCase());
+      // Clean up URL without reloading
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  // Handle pending join code - auto-login as guest if needed
+  useEffect(() => {
+    if (pendingJoinCode && !isLoading) {
+      if (isAuthenticated) {
+        // Already authenticated, go to join screen
+        setScreen('join');
+      } else {
+        // Not authenticated, auto-login as guest and proceed
+        loginAsGuest();
+      }
+    } else if (isAuthenticated && screen === 'start' && !pendingJoinCode) {
       setScreen('home');
     }
-  }, [isAuthenticated, screen]);
+  }, [isAuthenticated, isLoading, screen, pendingJoinCode, loginAsGuest]);
 
   // ============================================
   // Offline Game Handlers
@@ -431,8 +451,12 @@ function AppContent() {
               style={{ padding: 'var(--space-6) var(--space-4)' }}
             >
               <JoinGame
-                onGameJoined={handleGameJoined}
+                onGameJoined={(code) => {
+                  setPendingJoinCode(null);
+                  handleGameJoined(code);
+                }}
                 onCancel={handleGoHome}
+                initialCode={pendingJoinCode || undefined}
               />
             </motion.div>
           )}

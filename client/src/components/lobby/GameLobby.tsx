@@ -138,6 +138,15 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
     navigator.clipboard.writeText(gameCode);
   };
 
+  // Copy invite link to clipboard
+  const [linkCopied, setLinkCopied] = useState(false);
+  const copyInviteLink = () => {
+    const url = `${window.location.origin}${window.location.pathname}?join=${gameCode}`;
+    navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
   if (isLoading) {
     return (
       <div className="card" style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
@@ -218,15 +227,31 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
             </svg>
           </button>
         </div>
-        <p
+        <button
+          className="btn btn-secondary"
+          onClick={copyInviteLink}
           style={{
-            fontSize: 'var(--font-size-sm)',
-            color: 'var(--color-text-secondary)',
-            marginTop: 'var(--space-2)',
+            marginTop: 'var(--space-3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 'var(--space-2)',
+            width: '100%',
           }}
         >
-          Share this code with friends to let them join
-        </p>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          {linkCopied ? 'Link Copied!' : 'Copy Invite Link'}
+        </button>
       </div>
 
       {/* Players List */}
