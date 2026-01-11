@@ -3,10 +3,16 @@ import type { PlayerState } from '../types/index.js';
 import { TARGET_SCORE } from '../engine/constants.js';
 import { useI18n } from '../i18n/index.js';
 
+interface PlayerConnectionInfo {
+  id: string;
+  isConnected: boolean;
+}
+
 interface PlayerBarProps {
   players: PlayerState[];
   currentPlayerIndex: number;
   isFinalRound: boolean;
+  playerConnections?: PlayerConnectionInfo[];
 }
 
 /**
@@ -18,11 +24,18 @@ interface PlayerBarProps {
  * - Leader marked with crown
  * - Scrollable if many players
  */
-export function PlayerBar({ players, currentPlayerIndex, isFinalRound }: PlayerBarProps) {
+export function PlayerBar({ players, currentPlayerIndex, isFinalRound, playerConnections }: PlayerBarProps) {
   const { t } = useI18n();
 
   // Find leader
   const leader = players.reduce((a, b) => a.score > b.score ? a : b);
+
+  // Helper to get connection status
+  const getIsConnected = (playerId: string): boolean => {
+    if (!playerConnections) return true; // Assume connected if no data
+    const connection = playerConnections.find(p => p.id === playerId);
+    return connection?.isConnected ?? true;
+  };
 
   return (
     <section
@@ -76,6 +89,7 @@ export function PlayerBar({ players, currentPlayerIndex, isFinalRound }: PlayerB
           const isCurrent = index === currentPlayerIndex;
           const isLeader = player.id === leader.id && player.score > 0;
           const progress = Math.min(100, (player.score / TARGET_SCORE) * 100);
+          const isConnected = getIsConnected(player.id);
 
           return (
             <motion.div
@@ -110,8 +124,22 @@ export function PlayerBar({ players, currentPlayerIndex, isFinalRound }: PlayerB
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', minWidth: 0 }}>
+                  {/* Connection status dot */}
+                  {!player.isAI && (
+                    <span
+                      title={isConnected ? 'Online' : 'Offline'}
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: isConnected ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                        opacity: isConnected ? 1 : 0.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
                   {isLeader && <span title={t('leader')}>👑</span>}
-                  {isCurrent && (
+                  {isCurrent && isConnected && (
                     <span
                       style={{
                         width: 6,
@@ -119,6 +147,7 @@ export function PlayerBar({ players, currentPlayerIndex, isFinalRound }: PlayerB
                         borderRadius: '50%',
                         background: 'var(--color-primary)',
                         flexShrink: 0,
+                        animation: 'pulse 2s infinite',
                       }}
                     />
                   )}

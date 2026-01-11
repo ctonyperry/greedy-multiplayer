@@ -48,7 +48,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         highScore: 0,
         preferences: {
           defaultAiStrategy: 'balanced',
-          turnTimerPreference: 60,
+          turnTimerPreference: 0, // Default no timer
           aiTakeoverStrategy: 'balanced',
         },
         createdAt: new Date().toISOString(),

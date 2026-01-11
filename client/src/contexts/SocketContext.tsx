@@ -14,7 +14,7 @@ import {
 } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext.js';
-import type { GameState, Player, ChatMessage } from '../types/index.js';
+import type { GameState, Player, ChatMessage, TurnTimerState } from '../types/index.js';
 
 // Connection status
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -24,7 +24,7 @@ interface ServerToClientEvents {
   // Game state updates
   gameStateUpdate: (data: {
     gameState: GameState;
-    lastAction?: { playerId: string; action: unknown };
+    lastAction?: { playerId: string; action: unknown; isAIControlled?: boolean };
   }) => void;
 
   // Player events
@@ -44,6 +44,26 @@ interface ServerToClientEvents {
     turnStartedAt: string;
     turnExpiresAt?: string;
   }) => void;
+
+  // Timer synchronization events
+  timerSync: (data: TurnTimerState & { serverTime: string }) => void;
+  timerReset: (data: { playerId: string; lastActivityAt: string; expiresAt: string }) => void;
+  playerTimedOut: (data: { playerId: string; aiTakeover: boolean }) => void;
+  gracePeriodStarted: (data: { playerId: string; expiresAt: string }) => void;
+  gracePeriodEnded: (data: { playerId: string; reason: 'reconnected' | 'expired' }) => void;
+
+  // AI takeover events
+  aiTakeover: (data: { playerId: string; aiStrategy: string }) => void;
+  playerResumedControl: (data: { playerId: string }) => void;
+
+  // Strategy updates
+  playerStrategyUpdated: (data: { playerId: string; strategy: string }) => void;
+
+  // Game pause/resume (all players disconnected)
+  gamePaused: (data: { reason: string }) => void;
+  gameResumed: (data: { resumedBy: string }) => void;
+
+  // Legacy timer events (for backward compatibility)
   turnTimerUpdate: (data: { remainingSeconds: number }) => void;
   turnTimerExpired: (data: { playerId: string; aiTakeover: boolean }) => void;
 
@@ -70,6 +90,12 @@ interface ClientToServerEvents {
   // Request state (for reconnection)
   requestGameState: (data: { gameCode: string }) => void;
 
+  // Activity events (for timer reset)
+  diceSelected: (data: { gameCode: string }) => void;
+
+  // AI control
+  resumeControl: (data: { gameCode: string }) => void;
+
   // Chat
   sendChat: (data: { gameCode: string; message: string }) => void;
 }
@@ -89,6 +115,8 @@ interface SocketContextType {
   ) => void;
   sendChat: (gameCode: string, message: string) => void;
   requestGameState: (gameCode: string) => void;
+  notifyDiceSelected: (gameCode: string) => void;
+  resumeControl: (gameCode: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -242,6 +270,24 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  /**
+   * Notify server of dice selection (for debounced timer reset)
+   */
+  const notifyDiceSelected = useCallback((gameCode: string) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('diceSelected', { gameCode });
+    }
+  }, []);
+
+  /**
+   * Resume control from AI
+   */
+  const resumeControl = useCallback((gameCode: string) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('resumeControl', { gameCode });
+    }
+  }, []);
+
   // Track previous user ID to detect changes
   const prevUserIdRef = useRef<string | null>(null);
 
@@ -292,6 +338,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     sendAction,
     sendChat,
     requestGameState,
+    notifyDiceSelected,
+    resumeControl,
   };
 
   return (

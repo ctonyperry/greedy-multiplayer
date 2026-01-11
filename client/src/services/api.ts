@@ -124,9 +124,10 @@ export async function getGame(code: string): Promise<Game> {
 /**
  * Join an existing game
  */
-export async function joinGame(code: string): Promise<Game> {
+export async function joinGame(code: string, aiTakeoverStrategy?: string): Promise<Game> {
   const response = await apiRequest<{ game: Game }>(`/games/${code}/join`, {
     method: 'POST',
+    body: JSON.stringify({ aiTakeoverStrategy }),
   });
   return response.game;
 }
@@ -181,6 +182,29 @@ export async function leaveGame(code: string): Promise<void> {
   });
 }
 
+/**
+ * Update player's AI takeover strategy
+ */
+export async function updatePlayerStrategy(
+  code: string,
+  strategy: string
+): Promise<Game> {
+  const response = await apiRequest<{ game: Game }>(`/games/${code}/strategy`, {
+    method: 'POST',
+    body: JSON.stringify({ strategy }),
+  });
+  return response.game;
+}
+
+/**
+ * Forfeit the game (concede defeat)
+ */
+export async function forfeitGame(code: string): Promise<{ success: boolean; winnerId: string }> {
+  return apiRequest(`/games/${code}/forfeit`, {
+    method: 'POST',
+  });
+}
+
 // ============================================
 // Leaderboard API
 // ============================================
@@ -216,6 +240,8 @@ export const api = {
   removePlayer,
   startGame,
   leaveGame,
+  updatePlayerStrategy,
+  forfeitGame,
 
   // Leaderboard
   getLeaderboard,

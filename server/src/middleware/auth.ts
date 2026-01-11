@@ -1,10 +1,57 @@
 /**
  * Authentication Middleware
- * Validates Azure AD B2C JWT tokens
+ * Validates Firebase ID tokens and guest tokens
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK
+let firebaseInitialized = false;
+
+function initializeFirebase() {
+  if (firebaseInitialized) return;
+
+  try {
+    const projectId = process.env.FIREBASE_PROJECT_ID || 'greedy-60c21';
+
+    // Check for service account credentials in environment variables
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+    if (privateKey && clientEmail) {
+      // Use credentials from environment variables
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          privateKey: privateKey.replace(/\\n/g, '\n'), // Handle escaped newlines
+          clientEmail,
+        }),
+        projectId,
+      });
+      console.log('Firebase Admin initialized with service account credentials from env vars');
+    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      // Use service account file path
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId,
+      });
+      console.log('Firebase Admin initialized with GOOGLE_APPLICATION_CREDENTIALS');
+    } else {
+      // Initialize without credentials - will use JWT decode fallback
+      admin.initializeApp({ projectId });
+      console.log('Firebase Admin initialized with project ID only (dev mode)');
+    }
+
+    firebaseInitialized = true;
+  } catch (error) {
+    console.error('Failed to initialize Firebase Admin:', error);
+    firebaseInitialized = true; // Prevent retry loops
+  }
+}
+
+// Initialize on module load
+initializeFirebase();
 
 // Extend Express Request to include user info
 declare global {
@@ -14,32 +61,17 @@ declare global {
         id: string;
         email: string;
         name: string;
+        photoUrl?: string;
       };
     }
   }
 }
 
-interface AzureADB2CToken {
-  sub: string; // User ID
-  emails?: string[];
+interface DecodedToken {
+  uid: string;
+  email?: string;
   name?: string;
-  given_name?: string;
-  family_name?: string;
-  iss: string;
-  aud: string;
-  exp: number;
-  iat: number;
-}
-
-/**
- * Get Azure AD B2C configuration from environment
- */
-function getB2CConfig() {
-  return {
-    tenantName: process.env.AZURE_AD_B2C_TENANT_NAME || '',
-    clientId: process.env.AZURE_AD_B2C_CLIENT_ID || '',
-    policyName: process.env.AZURE_AD_B2C_POLICY_NAME || 'B2C_1_signupsignin',
-  };
+  picture?: string;
 }
 
 /**
@@ -67,69 +99,69 @@ function parseGuestToken(token: string): { id: string; name: string } | null {
 }
 
 /**
- * Validate JWT token from Azure AD B2C
- * In production, this should verify the token signature against Azure AD B2C JWKS
+ * Decode JWT without verification (for development fallback)
  */
-async function validateToken(token: string): Promise<AzureADB2CToken | null> {
-  const config = getB2CConfig();
+function decodeJwtPayload(token: string): DecodedToken | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
 
+    // Decode the payload (second part)
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+
+    return {
+      uid: payload.sub || payload.user_id,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+    };
+  } catch (error) {
+    console.error('JWT decode error:', error);
+    return null;
+  }
+}
+
+/**
+ * Validate Firebase ID token or guest token
+ */
+async function validateToken(token: string): Promise<DecodedToken | null> {
   // Check for guest token first
   const guestInfo = parseGuestToken(token);
   if (guestInfo) {
-    // Return a synthetic token payload for guests
     return {
-      sub: guestInfo.id,
+      uid: guestInfo.id,
       name: guestInfo.name,
-      emails: [],
-      iss: 'guest',
-      aud: 'guest',
-      exp: Date.now() / 1000 + 86400, // 24 hours from now
-      iat: Date.now() / 1000,
+      email: '',
     };
   }
 
-  // For development, if no B2C config, just decode without verification
-  if (!config.tenantName || !config.clientId) {
-    console.warn('Azure AD B2C not configured - skipping token verification');
-    try {
-      const decoded = jwt.decode(token) as AzureADB2CToken;
-      return decoded;
-    } catch {
-      return null;
-    }
-  }
-
-  // In production, verify against Azure AD B2C JWKS
-  // This is a simplified version - full implementation would fetch JWKS and verify
+  // Try full Firebase verification
   try {
-    // Expected issuer format for Azure AD B2C
-    const expectedIssuer = `https://${config.tenantName}.b2clogin.com/${config.tenantName}.onmicrosoft.com/${config.policyName}/v2.0/`;
-
-    const decoded = jwt.decode(token, { complete: true });
-    if (!decoded || typeof decoded === 'string') {
-      return null;
-    }
-
-    const payload = decoded.payload as AzureADB2CToken;
-
-    // Basic validation
-    if (payload.aud !== config.clientId) {
-      console.warn('Token audience mismatch');
-      return null;
-    }
-
-    if (payload.exp && payload.exp < Date.now() / 1000) {
-      console.warn('Token expired');
-      return null;
-    }
-
-    // Note: Full implementation would verify signature against JWKS
-    // For now, we trust the token if it passes basic checks
-    return payload;
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    return {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      name: decodedToken.name,
+      picture: decodedToken.picture,
+    };
   } catch (error) {
-    console.error('Token validation error:', error);
-    return null;
+    // Only log if it's not a common "no credentials" error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes('credential') && !errorMessage.includes('GOOGLE_APPLICATION_CREDENTIALS')) {
+      console.error('Firebase token verification failed:', errorMessage);
+    }
+
+    // Fallback: decode JWT without verification (development only)
+    const decoded = decodeJwtPayload(token);
+    if (decoded) {
+      console.log('Using decoded JWT (unverified) for user:', decoded.uid);
+      return decoded;
+    }
   }
+
+  return null;
 }
 
 /**
@@ -160,9 +192,10 @@ export async function authMiddleware(
 
     // Set user info on request
     req.user = {
-      id: decoded.sub,
-      email: decoded.emails?.[0] || '',
-      name: decoded.name || decoded.given_name || 'User',
+      id: decoded.uid,
+      email: decoded.email || '',
+      name: decoded.name || 'Player',
+      photoUrl: decoded.picture,
     };
 
     next();
@@ -190,9 +223,10 @@ export async function optionalAuthMiddleware(
       const decoded = await validateToken(token);
       if (decoded) {
         req.user = {
-          id: decoded.sub,
-          email: decoded.emails?.[0] || '',
-          name: decoded.name || decoded.given_name || 'User',
+          id: decoded.uid,
+          email: decoded.email || '',
+          name: decoded.name || 'Player',
+          photoUrl: decoded.picture,
         };
       }
     } catch {

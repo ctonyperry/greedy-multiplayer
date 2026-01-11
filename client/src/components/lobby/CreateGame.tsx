@@ -26,7 +26,7 @@ const STORAGE_KEY = 'greedy-game-settings';
 const DEFAULT_SETTINGS: Partial<GameSettings> = {
   targetScore: 10000,
   entryThreshold: 650,
-  maxTurnTimer: 60,
+  maxTurnTimer: 0, // No timer by default
 };
 
 function loadSavedSettings(): Partial<GameSettings> {

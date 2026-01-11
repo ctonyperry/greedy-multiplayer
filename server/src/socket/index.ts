@@ -3,17 +3,50 @@
  */
 
 import type { Server, Socket } from 'socket.io';
-import { setupGameHandlers } from './gameHandlers.js';
+import { setupGameHandlers, initializeGameHandlers } from './gameHandlers.js';
 import { setupChatHandlers } from './chatHandlers.js';
 import { gameManager } from '../services/gameManager.js';
+import { turnTimerManager } from '../services/TurnTimerManager.js';
 
 // Track which games each socket is in
 const socketGames = new Map<string, Set<string>>();
+
+// Track connected players per game (for pause detection)
+const gameConnections = new Map<string, Set<string>>();
+
+function getGameConnectionCount(gameCode: string): number {
+  return gameConnections.get(gameCode)?.size || 0;
+}
+
+function addGameConnection(gameCode: string, userId: string): void {
+  if (!gameConnections.has(gameCode)) {
+    gameConnections.set(gameCode, new Set());
+  }
+  gameConnections.get(gameCode)!.add(userId);
+}
+
+function removeGameConnection(gameCode: string, userId: string): number {
+  const connections = gameConnections.get(gameCode);
+  if (connections) {
+    connections.delete(userId);
+    if (connections.size === 0) {
+      gameConnections.delete(gameCode);
+    }
+    return connections.size;
+  }
+  return 0;
+}
 
 /**
  * Set up all Socket.IO event handlers
  */
 export function setupSocketHandlers(io: Server) {
+  // Initialize turn timer manager with Socket.IO server
+  turnTimerManager.initialize(io);
+
+  // Initialize game handlers (sets up AI timeout callback)
+  initializeGameHandlers(io);
+
   io.on('connection', (socket: Socket) => {
     console.log(`Client connected: ${socket.id}`);
 
@@ -58,10 +91,36 @@ export function setupSocketHandlers(io: Server) {
 
       // Get player info
       const userId = socket.data.userId || socket.id;
-      const userName = socket.data.userName || 'Anonymous';
+
+      // Track connection for pause detection
+      const wasEmpty = getGameConnectionCount(gameCode) === 0;
+      addGameConnection(gameCode, userId);
 
       // Notify others in the room
       socket.to(gameCode).emit('playerReconnected', userId);
+
+      // Notify timer manager of reconnect (may end grace period)
+      turnTimerManager.handleReconnect(gameCode, userId);
+
+      // If game was paused (all disconnected), resume it
+      if (wasEmpty) {
+        const game = await gameManager.getGame(gameCode);
+        if (game && game.isPaused) {
+          console.log(`🎮 Resuming game ${gameCode} - player reconnected`);
+          game.isPaused = false;
+          await gameManager.updateGame(game);
+          io.to(gameCode).emit('gameResumed', { resumedBy: userId });
+        }
+      }
+
+      // Send current timer state to reconnected player
+      const timerState = turnTimerManager.getTimerState(gameCode);
+      if (timerState) {
+        socket.emit('timerSync', {
+          ...timerState,
+          serverTime: new Date().toISOString(),
+        });
+      }
 
       // Store game code on socket for disconnect handling
       socket.data.currentGame = gameCode;
@@ -100,6 +159,29 @@ export function setupSocketHandlers(io: Server) {
       if (games) {
         for (const gameCode of games) {
           io.to(gameCode).emit('playerDisconnected', userId);
+
+          // Remove from connection tracking
+          const remainingConnections = removeGameConnection(gameCode, userId);
+
+          // If all players disconnected, pause the game
+          if (remainingConnections === 0) {
+            const game = await gameManager.getGame(gameCode);
+            if (game && game.status === 'playing' && !game.isPaused) {
+              console.log(`⏸️ Pausing game ${gameCode} - all players disconnected`);
+              game.isPaused = true;
+              await gameManager.updateGame(game);
+
+              // Pause the turn timer (don't trigger AI takeover)
+              turnTimerManager.pauseTimer(gameCode);
+
+              io.to(gameCode).emit('gamePaused', {
+                reason: 'all_disconnected',
+              });
+            }
+          } else {
+            // Notify timer manager of disconnect (may start grace period)
+            turnTimerManager.handleDisconnect(gameCode, userId);
+          }
         }
       }
 

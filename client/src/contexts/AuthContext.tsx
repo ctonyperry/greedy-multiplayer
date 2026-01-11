@@ -1,7 +1,7 @@
 /**
  * Authentication Context
  * Provides auth state and methods throughout the app
- * Supports both Azure AD B2C and guest login for local development
+ * Supports Firebase Google Sign-In and guest login
  */
 
 import {
@@ -13,11 +13,13 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  PublicClientApplication,
-  type AccountInfo,
-  type AuthenticationResult,
-} from '@azure/msal-browser';
-import { msalConfig, loginRequest, isAuthConfigured } from '../services/authConfig.js';
+  initializeFirebase,
+  signInWithGoogle,
+  signOutFirebase,
+  onAuthChange,
+  getIdToken,
+  type FirebaseUser,
+} from '../services/firebase.js';
 import { generateName } from '../utils/nameGenerator.js';
 
 // User type
@@ -25,6 +27,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  photoUrl?: string | null;
   isGuest?: boolean;
 }
 
@@ -36,39 +39,25 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  isConfigured: boolean;
   isGuest: boolean;
   login: () => Promise<void>;
   loginAsGuest: (name?: string) => void;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
+  updateDisplayName: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// MSAL instance (singleton)
-let msalInstance: PublicClientApplication | null = null;
-
-function getMsalInstance(): PublicClientApplication | null {
-  if (!isAuthConfigured()) {
-    return null;
-  }
-
-  if (!msalInstance) {
-    msalInstance = new PublicClientApplication(msalConfig);
-  }
-
-  return msalInstance;
-}
-
 /**
- * Convert MSAL account to User
+ * Convert Firebase user to our User type
  */
-function accountToUser(account: AccountInfo): User {
+function firebaseUserToUser(fbUser: FirebaseUser): User {
   return {
-    id: account.localAccountId || account.homeAccountId,
-    name: account.name || 'User',
-    email: account.username || '',
+    id: fbUser.uid,
+    name: fbUser.displayName || 'Player',
+    email: fbUser.email || '',
+    photoUrl: fbUser.photoURL,
   };
 }
 
@@ -78,78 +67,65 @@ function accountToUser(account: AccountInfo): User {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isConfigured] = useState(isAuthConfigured());
   const [isGuest, setIsGuest] = useState(false);
 
-  // Initialize - check for guest session first, then MSAL
+  // Initialize Firebase and listen for auth changes
   useEffect(() => {
-    async function initialize() {
-      // Check for existing guest session
-      try {
-        const guestSession = localStorage.getItem(GUEST_SESSION_KEY);
-        if (guestSession) {
-          const guestUser = JSON.parse(guestSession) as User;
-          setUser(guestUser);
-          setIsGuest(true);
-          setIsLoading(false);
-          return;
-        }
-      } catch {
-        localStorage.removeItem(GUEST_SESSION_KEY);
-      }
+    initializeFirebase();
 
-      // Initialize MSAL if configured
-      const msal = getMsalInstance();
-
-      if (!msal) {
+    // Check for existing guest session first
+    try {
+      const guestSession = localStorage.getItem(GUEST_SESSION_KEY);
+      if (guestSession) {
+        const guestUser = JSON.parse(guestSession) as User;
+        setUser(guestUser);
+        setIsGuest(true);
         setIsLoading(false);
         return;
       }
-
-      try {
-        // Handle redirect response (if returning from login)
-        await msal.initialize();
-        const response = await msal.handleRedirectPromise();
-
-        if (response) {
-          setUser(accountToUser(response.account!));
-        } else {
-          // Check for existing session
-          const accounts = msal.getAllAccounts();
-          if (accounts.length > 0) {
-            setUser(accountToUser(accounts[0]));
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    } catch {
+      localStorage.removeItem(GUEST_SESSION_KEY);
     }
 
-    initialize();
+    // Listen for Firebase auth state changes
+    const unsubscribe = onAuthChange((fbUser) => {
+      if (fbUser) {
+        setUser(firebaseUserToUser(fbUser));
+        setIsGuest(false);
+        // Clear any guest session when logging in with Google
+        localStorage.removeItem(GUEST_SESSION_KEY);
+      } else {
+        // Only clear user if not a guest
+        if (!isGuest) {
+          setUser(null);
+        }
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   /**
-   * Login with redirect (Azure AD B2C)
+   * Login with Google
    */
   const login = useCallback(async () => {
-    const msal = getMsalInstance();
-    if (!msal) {
-      console.warn('Auth not configured');
-      return;
-    }
-
     try {
-      await msal.loginRedirect(loginRequest);
+      setIsLoading(true);
+      const fbUser = await signInWithGoogle();
+      setUser(firebaseUserToUser(fbUser));
+      setIsGuest(false);
+      localStorage.removeItem(GUEST_SESSION_KEY);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   /**
-   * Login as guest (for local development/testing)
+   * Login as guest
    */
   const loginAsGuest = useCallback((name?: string) => {
     const guestUser: User = {
@@ -159,19 +135,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isGuest: true,
     };
 
-    // Store in localStorage for persistence
     localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(guestUser));
     setUser(guestUser);
     setIsGuest(true);
 
-    console.log(`🎮 Logged in as guest: ${guestUser.name}`);
+    console.log(`Logged in as guest: ${guestUser.name}`);
   }, []);
 
   /**
    * Logout
    */
   const logout = useCallback(async () => {
-    // Clear guest session if exists
     if (isGuest) {
       localStorage.removeItem(GUEST_SESSION_KEY);
       setUser(null);
@@ -179,12 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // MSAL logout
-    const msal = getMsalInstance();
-    if (!msal) return;
-
     try {
-      await msal.logoutRedirect();
+      await signOutFirebase();
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -194,37 +164,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Get access token for API calls
-   * For guests, returns a pseudo-token with user info
    */
   const getAccessToken = useCallback(async (): Promise<string | null> => {
-    // For guests, return a pseudo-token (the server will use socket auth instead)
     if (isGuest && user) {
       return `guest:${user.id}:${user.name}`;
     }
+    return getIdToken();
+  }, [user, isGuest]);
 
-    const msal = getMsalInstance();
-    if (!msal || !user) return null;
+  /**
+   * Update display name (for guests)
+   */
+  const updateDisplayName = useCallback((name: string) => {
+    if (!user) return;
 
-    try {
-      const accounts = msal.getAllAccounts();
-      if (accounts.length === 0) return null;
+    const updatedUser = { ...user, name };
+    setUser(updatedUser);
 
-      const response: AuthenticationResult = await msal.acquireTokenSilent({
-        ...loginRequest,
-        account: accounts[0],
-      });
-
-      return response.accessToken;
-    } catch (error) {
-      console.error('Token acquisition error:', error);
-
-      // Try interactive login if silent fails
-      try {
-        await msal.loginRedirect(loginRequest);
-        return null;
-      } catch {
-        return null;
-      }
+    if (isGuest) {
+      localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(updatedUser));
     }
   }, [user, isGuest]);
 
@@ -232,12 +190,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: !!user,
     isLoading,
-    isConfigured,
     isGuest,
     login,
     loginAsGuest,
     logout,
     getAccessToken,
+    updateDisplayName,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

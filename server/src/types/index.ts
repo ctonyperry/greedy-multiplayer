@@ -198,6 +198,22 @@ export interface ChatMessage {
   type: 'chat' | 'system';
 }
 
+/** Turn timer state for synchronization */
+export interface TurnTimerState {
+  /** When the current turn started */
+  turnStartedAt: string;
+  /** When the player last took an action (resets idle timer) */
+  lastActivityAt: string;
+  /** When the turn will timeout (calculated from lastActivityAt + timeout duration) */
+  expiresAt: string;
+  /** Whether the player is currently in grace period (disconnected) */
+  isInGracePeriod: boolean;
+  /** When grace period started (if applicable) */
+  gracePeriodStartedAt: string | null;
+  /** When grace period expires (if applicable) */
+  gracePeriodExpiresAt: string | null;
+}
+
 /** Multiplayer game session */
 export interface MultiplayerGame {
   id: string;
@@ -208,6 +224,12 @@ export interface MultiplayerGame {
   gameState: GameState | null;
   settings: GameSettings;
   currentTurnStartedAt: string | null;
+  /** Current turn timer state for synchronization */
+  turnTimer: TurnTimerState | null;
+  /** ID of player currently being controlled by AI due to timeout */
+  aiControlledPlayerId: string | null;
+  /** Whether game is paused (all players disconnected) */
+  isPaused: boolean;
   chat: ChatMessage[];
   createdAt: string;
   updatedAt: string;

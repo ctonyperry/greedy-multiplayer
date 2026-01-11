@@ -6,6 +6,8 @@
 import { Router } from 'express';
 import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth.js';
 import { gameManager } from '../services/gameManager.js';
+import { turnTimerManager } from '../services/TurnTimerManager.js';
+import { getCurrentPlayer } from '../engine/game.js';
 import type { Server } from 'socket.io';
 
 const router = Router();
@@ -102,11 +104,13 @@ router.post('/:code/join', authMiddleware, async (req, res) => {
   try {
     const { code } = req.params;
     const upperCode = code.toUpperCase();
+    const { aiTakeoverStrategy } = req.body as { aiTakeoverStrategy?: string };
 
     const game = await gameManager.joinGame(
       upperCode,
       req.user!.id,
-      req.user!.name
+      req.user!.name,
+      aiTakeoverStrategy
     );
 
     // Broadcast player joined event to everyone in the game room
@@ -193,6 +197,12 @@ router.post('/:code/start', authMiddleware, async (req, res) => {
     // Broadcast game started event to everyone in the game room
     if (io && game.gameState) {
       io.to(upperCode).emit('gameStarted', game.gameState);
+
+      // Start turn timer for the first player (if not AI and timer enabled)
+      const firstPlayer = getCurrentPlayer(game.gameState);
+      if (!firstPlayer.isAI && game.settings.maxTurnTimer > 0) {
+        turnTimerManager.startTurn(upperCode, firstPlayer.id, game.settings.maxTurnTimer * 1000);
+      }
     }
 
     res.json({ game });
@@ -246,6 +256,157 @@ router.post('/:code/leave', authMiddleware, async (req, res) => {
     console.error('Error leaving game:', error);
     res.status(400).json({
       error: error instanceof Error ? error.message : 'Failed to leave game',
+    });
+  }
+});
+
+/**
+ * POST /api/games/:code/forfeit
+ * Forfeit the game (concede defeat)
+ */
+router.post('/:code/forfeit', authMiddleware, async (req, res) => {
+  try {
+    const { code } = req.params;
+    const upperCode = code.toUpperCase();
+
+    const game = await gameManager.getGame(upperCode);
+    if (!game) {
+      res.status(404).json({ error: 'Game not found' });
+      return;
+    }
+
+    if (game.status !== 'playing') {
+      res.status(400).json({ error: 'Game is not in progress' });
+      return;
+    }
+
+    const player = game.players.find(p => p.id === req.user!.id);
+    if (!player) {
+      res.status(403).json({ error: 'You are not in this game' });
+      return;
+    }
+
+    // Find remaining players to determine winner
+    const remainingPlayers = game.players.filter(p => p.id !== req.user!.id);
+    if (remainingPlayers.length === 0) {
+      res.status(400).json({ error: 'Cannot forfeit - you are the only player' });
+      return;
+    }
+
+    // In a 2-player game, the other player wins
+    // In multiplayer, we just end the game with the highest scorer as winner
+    let winnerId: string;
+    if (remainingPlayers.length === 1) {
+      winnerId = remainingPlayers[0].id;
+    } else {
+      // Find highest scorer among remaining players
+      const gameState = game.gameState!;
+      let maxScore = -1;
+      let maxScorePlayerId = remainingPlayers[0].id;
+      for (const rp of remainingPlayers) {
+        const playerState = gameState.players.find(ps => ps.id === rp.id);
+        if (playerState && playerState.score > maxScore) {
+          maxScore = playerState.score;
+          maxScorePlayerId = rp.id;
+        }
+      }
+      winnerId = maxScorePlayerId;
+    }
+
+    // Update game state
+    game.status = 'finished';
+    game.finishedAt = new Date().toISOString();
+    game.winnerId = winnerId;
+
+    if (game.gameState) {
+      game.gameState.isGameOver = true;
+      const winnerIndex = game.players.findIndex(p => p.id === winnerId);
+      game.gameState.winnerIndex = winnerIndex >= 0 ? winnerIndex : null;
+    }
+
+    // Add system message
+    game.chat.push({
+      id: crypto.randomUUID(),
+      playerId: 'system',
+      playerName: 'System',
+      message: `${player.name} has forfeited the game`,
+      timestamp: new Date().toISOString(),
+      type: 'system',
+    });
+
+    await gameManager.updateGame(game);
+
+    // Stop any turn timers
+    turnTimerManager.clearTimer(upperCode);
+
+    // Broadcast game ended
+    if (io && game.gameState) {
+      const winner = game.players.find(p => p.id === winnerId);
+      io.to(upperCode).emit('gameEnded', {
+        winner: winner || remainingPlayers[0],
+        finalState: game.gameState,
+      });
+    }
+
+    res.json({ success: true, winnerId });
+  } catch (error) {
+    console.error('Error forfeiting game:', error);
+    res.status(400).json({
+      error: error instanceof Error ? error.message : 'Failed to forfeit game',
+    });
+  }
+});
+
+/**
+ * POST /api/games/:code/strategy
+ * Update player's AI takeover strategy
+ */
+router.post('/:code/strategy', authMiddleware, async (req, res) => {
+  try {
+    const { code } = req.params;
+    const upperCode = code.toUpperCase();
+    const { strategy } = req.body as { strategy: string };
+
+    if (!strategy) {
+      res.status(400).json({ error: 'Strategy is required' });
+      return;
+    }
+
+    const validStrategies = ['conservative', 'balanced', 'aggressive', 'chaos'];
+    if (!validStrategies.includes(strategy)) {
+      res.status(400).json({ error: 'Invalid strategy' });
+      return;
+    }
+
+    const game = await gameManager.getGame(upperCode);
+    if (!game) {
+      res.status(404).json({ error: 'Game not found' });
+      return;
+    }
+
+    // Find and update the player's strategy
+    const player = game.players.find(p => p.id === req.user!.id);
+    if (!player) {
+      res.status(403).json({ error: 'You are not in this game' });
+      return;
+    }
+
+    player.aiTakeoverStrategy = strategy;
+    await gameManager.updateGame(game);
+
+    // Broadcast strategy update to all players
+    if (io) {
+      io.to(upperCode).emit('playerStrategyUpdated', {
+        playerId: req.user!.id,
+        strategy,
+      });
+    }
+
+    res.json({ game });
+  } catch (error) {
+    console.error('Error updating strategy:', error);
+    res.status(400).json({
+      error: error instanceof Error ? error.message : 'Failed to update strategy',
     });
   }
 });

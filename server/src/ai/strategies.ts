@@ -5,10 +5,22 @@
  * Each strategy decides which dice to keep and whether to continue rolling.
  */
 
-import type { TurnState, Dice } from '../types/index.js';
+import type { TurnState, Dice, GameState } from '../types/index.js';
 import { TurnPhase } from '../types/index.js';
 import { scoreSelection } from '../engine/scoring.js';
 import { ENTRY_THRESHOLD, DICE_COUNT } from '../engine/constants.js';
+
+/**
+ * Context about the game state for carryover-aware decisions
+ */
+export interface AIGameContext {
+  /** Number of dice that would be passed to next player if banking now */
+  diceRemainingAfterBank: number;
+  /** Whether the next player is on the board (can claim carryover freely) */
+  nextPlayerIsOnBoard: boolean;
+  /** Current turn score that would become carryover */
+  turnScoreForCarryover: number;
+}
 
 /**
  * AI decision result
@@ -21,8 +33,75 @@ export interface AIDecision {
 /**
  * Strategy function type
  * Takes turn state and returns decision for roll/bank phase
+ * Optional gameContext provides info for carryover-aware decisions
  */
-export type AIStrategy = (turnState: TurnState, isOnBoard: boolean) => AIDecision;
+export type AIStrategy = (
+  turnState: TurnState,
+  isOnBoard: boolean,
+  gameContext?: AIGameContext
+) => AIDecision;
+
+/**
+ * Calculate success probability for stealing a carryover with n dice
+ */
+function calculateCarryoverSuccessProb(diceCount: number): number {
+  // P(at least one 1 or 5) = 1 - P(no 1 or 5 in all dice)
+  return 1 - Math.pow(4 / 6, diceCount);
+}
+
+/**
+ * Evaluate the risk of creating a carryover for the opponent
+ *
+ * Returns a risk score from 0 (no risk) to 1 (maximum risk)
+ * Risk is based on:
+ * - How many dice opponent gets (more dice = higher steal success)
+ * - Whether opponent is on board (can steal freely)
+ * - Value of the carryover (more points = more damaging if stolen)
+ */
+function evaluateCarryoverRisk(context: AIGameContext): {
+  riskScore: number;
+  stealSuccessProb: number;
+  reasoning: string;
+} {
+  const { diceRemainingAfterBank, nextPlayerIsOnBoard, turnScoreForCarryover } = context;
+
+  // If no dice remaining or very low score, no carryover risk
+  if (diceRemainingAfterBank === 0 || turnScoreForCarryover < 100) {
+    return { riskScore: 0, stealSuccessProb: 0, reasoning: 'No carryover created' };
+  }
+
+  const stealSuccessProb = calculateCarryoverSuccessProb(diceRemainingAfterBank);
+
+  // Risk factors:
+  // 1. Steal success probability (4 dice = 94%, 3 dice = 70%, 2 dice = 56%, 1 die = 33%)
+  // 2. Whether opponent can claim freely (on board)
+  // 3. Value of carryover (logarithmic scale, diminishing returns)
+
+  let riskScore = stealSuccessProb;
+
+  // Increase risk if opponent is on board (they don't need to meet threshold)
+  if (nextPlayerIsOnBoard) {
+    riskScore *= 1.3; // 30% more risky
+  } else {
+    // If not on board, they need entry threshold to keep carryover points
+    // This makes carryover less valuable to them
+    riskScore *= 0.7; // 30% less risky
+  }
+
+  // Factor in value (higher value = slightly more risk, but capped)
+  const valueFactor = Math.min(1.2, 0.8 + (turnScoreForCarryover / 2000) * 0.4);
+  riskScore *= valueFactor;
+
+  // Cap at 1.0
+  riskScore = Math.min(1, riskScore);
+
+  const reasoning =
+    `${diceRemainingAfterBank} dice @ ${(stealSuccessProb * 100).toFixed(0)}% steal, ` +
+    `opponent ${nextPlayerIsOnBoard ? 'on' : 'off'} board, ` +
+    `${turnScoreForCarryover} points at risk`;
+
+  return { riskScore, stealSuccessProb, reasoning };
+}
 
 /**
  * Find the best dice to keep from a roll
@@ -66,8 +145,9 @@ function hasHotDice(turnState: TurnState): boolean {
  * - Prioritizes not losing accumulated points
  * - Banks immediately upon reaching entry threshold when not on board
  * - ALWAYS continues on hot dice (free value)
+ * - Avoids creating risky carryovers (3+ dice to opponent on board)
  */
-export const conservativeStrategy: AIStrategy = (turnState, isOnBoard) => {
+export const conservativeStrategy: AIStrategy = (turnState, isOnBoard, gameContext) => {
   // ALWAYS roll on hot dice - it's free expected value with only ~13% bust chance
   if (hasHotDice(turnState)) {
     return { action: 'ROLL' };
@@ -78,8 +158,22 @@ export const conservativeStrategy: AIStrategy = (turnState, isOnBoard) => {
     return { action: 'BANK' };
   }
 
-  // If on board, bank at 300+
+  // If on board, bank at 300+ BUT consider carryover risk
   if (isOnBoard && turnState.turnScore >= 300) {
+    // Check carryover risk if context available
+    if (gameContext) {
+      const risk = evaluateCarryoverRisk(gameContext);
+      // Conservative: if banking creates risky carryover (3+ dice, opponent on board),
+      // consider rolling again to reduce dice count
+      if (risk.riskScore > 0.6 && turnState.diceRemaining > 2) {
+        console.log(`🛡️ Conservative avoiding carryover: ${risk.reasoning}`);
+        // Only continue if bust risk is acceptable
+        const bustProb = Math.pow(4 / 6, turnState.diceRemaining);
+        if (bustProb < 0.35) {
+          return { action: 'ROLL' };
+        }
+      }
+    }
     return { action: 'BANK' };
   }
 
@@ -94,8 +188,9 @@ export const conservativeStrategy: AIStrategy = (turnState, isOnBoard) => {
  * - Only banks at very high scores
  * - Accepts high bust risk for potential payoff
  * - ALWAYS continues on hot dice
+ * - May intentionally create large carryovers for psychological pressure
  */
-export const aggressiveStrategy: AIStrategy = (turnState, isOnBoard) => {
+export const aggressiveStrategy: AIStrategy = (turnState, isOnBoard, gameContext) => {
   // ALWAYS roll on hot dice
   if (hasHotDice(turnState)) {
     return { action: 'ROLL' };
@@ -124,13 +219,18 @@ export const aggressiveStrategy: AIStrategy = (turnState, isOnBoard) => {
     return { action: 'ROLL' };
   }
 
-  // On board - original aggressive behavior
+  // On board - aggressive behavior with carryover awareness
   // Push for hot dice if we're close
   if (turnState.diceRemaining <= 2 && turnState.turnScore < 2500) {
     return { action: 'ROLL' };
   }
 
   if (turnState.turnScore >= 3500) {
+    // Even aggressive banks at 3500, but might consider carryover for mind games
+    if (gameContext && gameContext.diceRemainingAfterBank >= 3) {
+      // Large carryover creates pressure - aggressive likes this!
+      console.log(`🔥 Aggressive creating pressure carryover: ${gameContext.diceRemainingAfterBank} dice, ${gameContext.turnScoreForCarryover} points`);
+    }
     return { action: 'BANK' };
   }
 
@@ -146,8 +246,9 @@ export const aggressiveStrategy: AIStrategy = (turnState, isOnBoard) => {
  * - Adapts thresholds based on game state
  * - Prioritizes getting on the board when close to entry threshold
  * - ALWAYS continues on hot dice
+ * - Weighs carryover risk vs bust risk when deciding to bank
  */
-export const balancedStrategy: AIStrategy = (turnState, isOnBoard) => {
+export const balancedStrategy: AIStrategy = (turnState, isOnBoard, gameContext) => {
   // ALWAYS roll on hot dice - it's free expected value
   if (hasHotDice(turnState)) {
     return { action: 'ROLL' };
@@ -187,19 +288,36 @@ export const balancedStrategy: AIStrategy = (turnState, isOnBoard) => {
   // Calculate risk/reward ratio
   const ev = calculateRollEV(turnState.diceRemaining);
   const riskValue = turnState.turnScore; // What we'd lose on bust
+  const bustProb = Math.pow(4 / 6, turnState.diceRemaining);
 
   // Dynamic threshold based on dice remaining
   // More dice = safer to roll
   const diceBonus = (turnState.diceRemaining / DICE_COUNT) * 500;
   const effectiveThreshold = 1000 - diceBonus;
 
+  // Check carryover risk if context available
+  let carryoverRiskAdjustment = 0;
+  if (gameContext && turnState.turnScore >= effectiveThreshold) {
+    const risk = evaluateCarryoverRisk(gameContext);
+    // If carryover is risky and bust risk is acceptable, consider rolling
+    if (risk.riskScore > 0.5 && bustProb < 0.4) {
+      // Carryover is risky - maybe roll to reduce dice
+      carryoverRiskAdjustment = risk.riskScore * 300; // Add to threshold
+      console.log(`⚖️ Balanced weighing carryover: ${risk.reasoning}, adjustment: +${carryoverRiskAdjustment.toFixed(0)}`);
+    }
+  }
+
   // Bank if we have a good score and risk outweighs reward
-  if (turnState.turnScore >= effectiveThreshold && riskValue > ev * 3) {
+  // Carryover adjustment raises the bank threshold (making us more likely to roll)
+  if (
+    turnState.turnScore >= effectiveThreshold + carryoverRiskAdjustment &&
+    riskValue > ev * 3
+  ) {
     return { action: 'BANK' };
   }
 
-  // Bank if score is high enough regardless
-  if (turnState.turnScore >= 1500) {
+  // Bank if score is high enough regardless (but still consider carryover)
+  if (turnState.turnScore >= 1500 + carryoverRiskAdjustment / 2) {
     return { action: 'BANK' };
   }
 
@@ -213,8 +331,9 @@ export const balancedStrategy: AIStrategy = (turnState, isOnBoard) => {
  * - Makes semi-random decisions
  * - Still respects game rules (entry threshold)
  * - Adds unpredictability to the game
+ * - Ignores carryover considerations (true chaos!)
  */
-export const chaosStrategy: AIStrategy = (turnState, isOnBoard) => {
+export const chaosStrategy: AIStrategy = (turnState, isOnBoard, _gameContext) => {
   // Even chaos knows to roll on hot dice - it's too good to pass up!
   if (hasHotDice(turnState)) {
     return { action: 'ROLL' };
@@ -371,16 +490,36 @@ function shouldAttemptSteal(
 }
 
 /**
+ * Build game context for carryover-aware decisions
+ */
+function buildGameContext(gameState: GameState): AIGameContext {
+  const { turn, players, currentPlayerIndex } = gameState;
+  const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
+  const nextPlayer = players[nextPlayerIndex];
+
+  return {
+    diceRemainingAfterBank: turn.diceRemaining,
+    nextPlayerIsOnBoard: nextPlayer.isOnBoard,
+    turnScoreForCarryover: turn.turnScore,
+  };
+}
+
+/**
  * Make a complete AI decision for the current turn state
  *
  * Handles both the KEEPING phase (selecting dice) and DECIDING phase (roll/bank)
+ * Optionally accepts full game state for carryover-aware decisions
  */
 export function makeAIDecision(
   turnState: TurnState,
   isOnBoard: boolean,
   strategy: AIStrategy,
-  strategyName: string = 'balanced'
+  strategyName: string = 'balanced',
+  gameState?: GameState
 ): AIDecision {
+  // Build game context if we have the full game state
+  const gameContext = gameState ? buildGameContext(gameState) : undefined;
+
   // Handle STEAL_REQUIRED phase - decide to attempt or decline
   if (turnState.phase === TurnPhase.STEAL_REQUIRED && !turnState.currentRoll) {
     const stealDecision = shouldAttemptSteal(
@@ -406,9 +545,9 @@ export function makeAIDecision(
     }
   }
 
-  // If we're deciding whether to roll or bank, use the strategy
+  // If we're deciding whether to roll or bank, use the strategy with context
   if (turnState.phase === TurnPhase.DECIDING) {
-    return strategy(turnState, isOnBoard);
+    return strategy(turnState, isOnBoard, gameContext);
   }
 
   // Default to rolling

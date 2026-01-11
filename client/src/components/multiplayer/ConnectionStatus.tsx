@@ -7,10 +7,11 @@ import { useSocket } from '../../contexts/SocketContext.js';
 
 interface ConnectionStatusProps {
   compact?: boolean;
+  showReconnect?: boolean;
 }
 
-export function ConnectionStatus({ compact = false }: ConnectionStatusProps) {
-  const { status, error } = useSocket();
+export function ConnectionStatus({ compact = false, showReconnect = false }: ConnectionStatusProps) {
+  const { status, error, connect } = useSocket();
 
   const statusConfig = {
     disconnected: {
@@ -88,6 +89,8 @@ export function ConnectionStatus({ compact = false }: ConnectionStatusProps) {
     );
   }
 
+  const canReconnect = showReconnect && (status === 'disconnected' || status === 'error');
+
   return (
     <div
       style={{
@@ -105,6 +108,23 @@ export function ConnectionStatus({ compact = false }: ConnectionStatusProps) {
         {config.icon}
       </svg>
       <span>{error || config.label}</span>
+      {canReconnect && (
+        <button
+          onClick={() => connect()}
+          style={{
+            marginLeft: 'var(--space-1)',
+            padding: 'var(--space-1) var(--space-2)',
+            fontSize: 'var(--font-size-xs)',
+            backgroundColor: 'var(--color-primary)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer',
+          }}
+        >
+          Reconnect
+        </button>
+      )}
     </div>
   );
 }

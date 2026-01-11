@@ -1,2 +1,9 @@
 export { api, setTokenGetter } from './api.js';
-export { msalConfig, loginRequest, isAuthConfigured } from './authConfig.js';
+export {
+  initializeFirebase,
+  getFirebaseAuth,
+  signInWithGoogle,
+  signOutFirebase,
+  onAuthChange,
+  getIdToken,
+} from './firebase.js';

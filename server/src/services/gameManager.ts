@@ -62,7 +62,7 @@ class GameManager {
           name: hostName,
           isAI: false,
           isConnected: true,
-          turnTimerPreference: 60,
+          turnTimerPreference: 0, // Default no timer
           aiTakeoverStrategy: 'balanced',
         },
       ],
@@ -70,9 +70,12 @@ class GameManager {
       settings: {
         targetScore: settings?.targetScore || 10000,
         entryThreshold: settings?.entryThreshold || 650,
-        maxTurnTimer: settings?.maxTurnTimer || 0, // 0 = no timer
+        maxTurnTimer: settings?.maxTurnTimer ?? 0, // Default no timer (0 = disabled)
       },
       currentTurnStartedAt: null,
+      turnTimer: null,
+      aiControlledPlayerId: null,
+      isPaused: false,
       chat: [],
       createdAt: now,
       updatedAt: now,
@@ -89,7 +92,8 @@ class GameManager {
   async joinGame(
     code: string,
     playerId: string,
-    playerName: string
+    playerName: string,
+    aiTakeoverStrategy?: string
   ): Promise<MultiplayerGame> {
     const game = await cosmosService.getGame(code);
 
@@ -101,11 +105,20 @@ class GameManager {
       throw new Error('Game already started');
     }
 
+    // Validate AI strategy
+    const validStrategies = ['conservative', 'balanced', 'aggressive', 'chaos'];
+    const strategy: string = validStrategies.includes(aiTakeoverStrategy || '')
+      ? aiTakeoverStrategy!
+      : 'balanced';
+
     // Check if player is already in game
     const existingPlayer = game.players.find((p) => p.id === playerId);
     if (existingPlayer) {
-      // Update connection status
+      // Update connection status and optionally strategy
       existingPlayer.isConnected = true;
+      if (aiTakeoverStrategy) {
+        existingPlayer.aiTakeoverStrategy = strategy;
+      }
       game.updatedAt = new Date().toISOString();
       return cosmosService.updateGame(game);
     }
@@ -121,8 +134,8 @@ class GameManager {
       name: playerName,
       isAI: false,
       isConnected: true,
-      turnTimerPreference: 60,
-      aiTakeoverStrategy: 'balanced',
+      turnTimerPreference: 0, // Default no timer
+      aiTakeoverStrategy: strategy,
     });
 
     game.updatedAt = new Date().toISOString();
@@ -342,6 +355,14 @@ class GameManager {
       game.winnerId = game.players[gameState.winnerIndex].id;
     }
 
+    return cosmosService.updateGame(game);
+  }
+
+  /**
+   * Update a game directly (for metadata changes like AI control)
+   */
+  async updateGame(game: MultiplayerGame): Promise<MultiplayerGame> {
+    game.updatedAt = new Date().toISOString();
     return cosmosService.updateGame(game);
   }
 }

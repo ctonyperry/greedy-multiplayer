@@ -12,8 +12,34 @@ interface JoinGameProps {
   initialCode?: string;
 }
 
+const AI_STRATEGIES = [
+  { value: 'conservative', label: 'Conservative', description: 'Banks early, plays it safe' },
+  { value: 'balanced', label: 'Balanced', description: 'Moderate risk and reward' },
+  { value: 'aggressive', label: 'Aggressive', description: 'Pushes for big scores' },
+  { value: 'chaos', label: 'Chaos', description: 'Unpredictable decisions' },
+];
+
+const STRATEGY_STORAGE_KEY = 'greedy-ai-strategy';
+
+function loadSavedStrategy(): string {
+  try {
+    return localStorage.getItem(STRATEGY_STORAGE_KEY) || 'balanced';
+  } catch {
+    return 'balanced';
+  }
+}
+
+function saveStrategy(strategy: string) {
+  try {
+    localStorage.setItem(STRATEGY_STORAGE_KEY, strategy);
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 export function JoinGame({ onGameJoined, onCancel, initialCode = '' }: JoinGameProps) {
   const [code, setCode] = useState(initialCode);
+  const [aiStrategy, setAiStrategy] = useState(loadSavedStrategy);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +66,8 @@ export function JoinGame({ onGameJoined, onCancel, initialCode = '' }: JoinGameP
     setError(null);
 
     try {
-      await api.joinGame(code);
+      saveStrategy(aiStrategy);
+      await api.joinGame(code, aiStrategy);
       onGameJoined(code);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join game');
@@ -107,6 +134,49 @@ export function JoinGame({ onGameJoined, onCancel, initialCode = '' }: JoinGameP
             }}
           >
             Ask the host for the 6-character code
+          </p>
+        </div>
+
+        {/* AI Backup Strategy */}
+        <div>
+          <label
+            htmlFor="aiStrategy"
+            style={{
+              display: 'block',
+              marginBottom: 'var(--space-2)',
+              fontWeight: 'var(--font-weight-medium)',
+            }}
+          >
+            Backup AI Style
+          </label>
+          <select
+            id="aiStrategy"
+            value={aiStrategy}
+            onChange={(e) => setAiStrategy(e.target.value)}
+            style={{
+              width: '100%',
+              padding: 'var(--space-3)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-border)',
+              backgroundColor: 'var(--color-surface)',
+              color: 'var(--color-text)',
+              fontSize: 'var(--font-size-base)',
+            }}
+          >
+            {AI_STRATEGIES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label} - {s.description}
+              </option>
+            ))}
+          </select>
+          <p
+            style={{
+              marginTop: 'var(--space-2)',
+              fontSize: 'var(--font-size-sm)',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            This AI plays for you if you disconnect or time out
           </p>
         </div>
 

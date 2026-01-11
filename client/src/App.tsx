@@ -2,32 +2,26 @@ import { useState, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext.js';
 import { SocketProvider } from './contexts/SocketContext.js';
-import { setTokenGetter } from './services/api.js';
-import { StartScreen } from './ui/StartScreen.js';
-import type { PlayerConfig } from './ui/StartScreen.js';
-import { GameBoard } from './ui/GameBoard.js';
+import { ToastProvider } from './contexts/ToastContext.js';
+import { setTokenGetter, api } from './services/api.js';
 import { GameOver } from './ui/GameOver.js';
-import { DebugFooter } from './ui/DebugFooter.js';
 import { HelpPanel } from './ui/HelpPanel.js';
 import { SignInButton } from './components/auth/index.js';
 import { CreateGame, JoinGame, GameLobby } from './components/lobby/index.js';
-import { MultiplayerGameBoard } from './components/multiplayer/index.js';
-import { createGameState } from './engine/game.js';
-import { gameLogger } from './debug/GameLogger.js';
+import { MultiplayerGameBoard, ConnectionStatus } from './components/multiplayer/index.js';
 import { useI18n } from './i18n/index.js';
+import { useActiveGames } from './hooks/useActiveGames.js';
 import type { GameState } from './types/index.js';
 import './styles/design-system.css';
 
 type Screen =
-  | 'start'       // Choose: sign in OR play offline
+  | 'start'       // Sign in screen
   | 'home'        // Signed in, choose create/join
   | 'create'      // Creating new game (timer settings)
   | 'join'        // Entering game code
   | 'lobby'       // Waiting for players/start
-  | 'game'        // Playing (online or offline)
+  | 'game'        // Playing online
   | 'gameover';   // Game finished
-
-type GameMode = 'offline' | 'online';
 
 /**
  * AppContent - Main app with screen management
@@ -36,10 +30,10 @@ type GameMode = 'offline' | 'online';
 function AppContent() {
   const { t } = useI18n();
   const { user, isAuthenticated, isLoading, isGuest, logout, loginAsGuest, getAccessToken } = useAuth();
+  const { activeGames, addGame, removeGame, refreshGames } = useActiveGames();
   const [screen, setScreen] = useState<Screen>('start');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showHelp, setShowHelp] = useState(false);
-  const [gameMode, setGameMode] = useState<GameMode>('offline');
   const [gameCode, setGameCode] = useState<string | null>(null);
   const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
 
@@ -74,37 +68,15 @@ function AppContent() {
     }
   }, [isAuthenticated, isLoading, screen, pendingJoinCode, loginAsGuest]);
 
-  // ============================================
-  // Offline Game Handlers
-  // ============================================
-
-  const handleOfflineStart = useCallback((players: PlayerConfig[]) => {
-    gameLogger.reset();
-    gameLogger.gameStart(players.map(p => ({
-      name: p.name,
-      isAI: p.isAI,
-      aiStrategy: p.aiStrategy,
-    })));
-    const newGame = createGameState(players);
-    setGameState(newGame);
-    setGameMode('offline');
-    setScreen('game');
-  }, []);
-
-  const handleGameStateChange = useCallback((newState: GameState) => {
-    setGameState(newState);
-    if (newState.isGameOver) {
-      const winner = newState.players.reduce((a, b) => a.score > b.score ? a : b);
-      gameLogger.gameEnd(
-        winner.name,
-        newState.players.map(p => ({ name: p.name, score: p.score }))
-      );
-      setTimeout(() => setScreen('gameover'), 500);
+  // Refresh active games when navigating to home screen
+  useEffect(() => {
+    if (screen === 'home' && isAuthenticated) {
+      refreshGames();
     }
-  }, []);
+  }, [screen, isAuthenticated, refreshGames]);
 
   // ============================================
-  // Online Game Handlers
+  // Game Handlers
   // ============================================
 
   const handleGoHome = useCallback(() => {
@@ -121,26 +93,49 @@ function AppContent() {
     setScreen('join');
   }, []);
 
+  const handleResumeGame = useCallback((code: string, status: 'waiting' | 'playing') => {
+    setGameCode(code);
+    addGame(code);
+    if (status === 'waiting') {
+      setScreen('lobby');
+    } else {
+      setScreen('game');
+    }
+  }, [addGame]);
+
   const handleGameCreated = useCallback((code: string) => {
     setGameCode(code);
-    setGameMode('online');
+    addGame(code);
     setScreen('lobby');
-  }, []);
+  }, [addGame]);
 
   const handleGameJoined = useCallback((code: string) => {
     setGameCode(code);
-    setGameMode('online');
+    addGame(code);
     setScreen('lobby');
-  }, []);
+  }, [addGame]);
 
   const handleOnlineGameStart = useCallback(() => {
     setScreen('game');
   }, []);
 
   const handleLeaveLobby = useCallback(() => {
+    if (gameCode) {
+      removeGame(gameCode);
+    }
     setGameCode(null);
     setScreen('home');
-  }, []);
+  }, [gameCode, removeGame]);
+
+  const handleLeaveGame = useCallback(async (code: string) => {
+    try {
+      await api.leaveGame(code);
+    } catch (err) {
+      // Game may already be gone, that's fine
+      console.log('Leave game error (may be expected):', err);
+    }
+    removeGame(code);
+  }, [removeGame]);
 
   // ============================================
   // Common Handlers
@@ -155,11 +150,6 @@ function AppContent() {
       setScreen('start');
     }
   }, [isAuthenticated]);
-
-  const _handlePlayOffline = useCallback(() => {
-    setGameMode('offline');
-    setScreen('game');
-  }, []);
 
   const handleSignOut = useCallback(async () => {
     await logout();
@@ -208,6 +198,11 @@ function AppContent() {
 
         {/* Header actions */}
         <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+          {/* Connection status - show when in game or lobby */}
+          {(screen === 'game' || screen === 'lobby') && (
+            <ConnectionStatus compact showReconnect />
+          )}
+
           {/* User info */}
           {isAuthenticated && user && (
             <span
@@ -234,8 +229,21 @@ function AppContent() {
               onClick={handleNewGame}
               className="btn btn-ghost btn-sm"
               style={{ minHeight: 44 }}
+              aria-label="Home"
             >
-              {t('newGame')}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
             </button>
           )}
 
@@ -289,7 +297,6 @@ function AppContent() {
                   <div
                     className="card"
                     style={{
-                      marginBottom: 'var(--space-4)',
                       textAlign: 'center',
                     }}
                   >
@@ -318,40 +325,6 @@ function AppContent() {
                     </div>
                   </div>
                 )}
-
-                {/* Divider */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-3)',
-                    margin: 'var(--space-5) 0',
-                  }}
-                >
-                  <div
-                    style={{
-                      flex: 1,
-                      height: '1px',
-                      backgroundColor: 'var(--color-border)',
-                    }}
-                  />
-                  <span style={{ color: 'var(--color-text-secondary)' }}>or</span>
-                  <div
-                    style={{
-                      flex: 1,
-                      height: '1px',
-                      backgroundColor: 'var(--color-border)',
-                    }}
-                  />
-                </div>
-
-                {/* Offline play */}
-                <div className="card">
-                  <h3 style={{ marginBottom: 'var(--space-3)', textAlign: 'center' }}>
-                    Play Offline
-                  </h3>
-                  <StartScreen onStart={handleOfflineStart} />
-                </div>
               </div>
             </motion.div>
           )}
@@ -381,6 +354,104 @@ function AppContent() {
                   </p>
                 </div>
 
+                {/* Active Games - Resume Game */}
+                {activeGames.length > 0 && (
+                  <div
+                    style={{
+                      marginBottom: 'var(--space-4)',
+                      padding: 'var(--space-3)',
+                      backgroundColor: 'var(--color-surface-elevated)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '1px solid var(--color-primary)',
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: 'var(--font-size-sm)',
+                        color: 'var(--color-primary)',
+                        marginBottom: 'var(--space-3)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      Resume Game
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {activeGames.map((activeGame) => (
+                        <div
+                          key={activeGame.code}
+                          style={{
+                            display: 'flex',
+                            gap: 'var(--space-2)',
+                            alignItems: 'stretch',
+                          }}
+                        >
+                          <button
+                            className="btn btn-secondary"
+                            onClick={() => {
+                              const status = activeGame.game?.status || 'waiting';
+                              handleResumeGame(activeGame.code, status as 'waiting' | 'playing');
+                            }}
+                            style={{
+                              flex: 1,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: 'var(--space-3)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                              <span
+                                style={{
+                                  fontFamily: 'monospace',
+                                  fontWeight: 'var(--font-weight-bold)',
+                                }}
+                              >
+                                {activeGame.code}
+                              </span>
+                              {activeGame.game && (
+                                <span
+                                  style={{
+                                    fontSize: 'var(--font-size-xs)',
+                                    color: activeGame.game.status === 'playing'
+                                      ? 'var(--color-primary)'
+                                      : 'var(--color-text-secondary)',
+                                    padding: '2px 6px',
+                                    backgroundColor: activeGame.game.status === 'playing'
+                                      ? 'var(--color-primary-light)'
+                                      : 'var(--color-surface-hover)',
+                                    borderRadius: 'var(--radius-sm)',
+                                  }}
+                                >
+                                  {activeGame.game.status === 'playing' ? 'In Progress' : 'Waiting'}
+                                </span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: 'var(--font-size-sm)' }}>
+                              {activeGame.game
+                                ? `${activeGame.game.players.length} player${activeGame.game.players.length !== 1 ? 's' : ''}`
+                                : 'Resume'
+                              }
+                            </span>
+                          </button>
+                          <button
+                            className="btn btn-ghost"
+                            onClick={() => handleLeaveGame(activeGame.code)}
+                            style={{
+                              padding: 'var(--space-2) var(--space-3)',
+                              color: 'var(--color-text-secondary)',
+                              minWidth: 44,
+                            }}
+                            title="Leave game"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div
                   style={{
                     display: 'flex',
@@ -407,18 +478,6 @@ function AppContent() {
                     }}
                   >
                     Join Game
-                  </button>
-                  <button
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      setGameMode('offline');
-                      setScreen('start');
-                    }}
-                    style={{
-                      padding: 'var(--space-4)',
-                    }}
-                  >
-                    Play Offline vs AI
                   </button>
                 </div>
               </div>
@@ -486,17 +545,7 @@ function AppContent() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {gameMode === 'offline' && gameState ? (
-                <GameBoard
-                  gameState={gameState}
-                  onGameStateChange={handleGameStateChange}
-                  showHints
-                />
-              ) : gameMode === 'offline' ? (
-                // Show start screen for offline mode if no game state
-                <StartScreen onStart={handleOfflineStart} />
-              ) : gameCode ? (
-                // Online multiplayer game board
+              {gameCode ? (
                 <MultiplayerGameBoard
                   gameCode={gameCode}
                   onGameEnd={(finalState) => {
@@ -531,8 +580,6 @@ function AppContent() {
         </AnimatePresence>
       </main>
 
-      <DebugFooter />
-
       {/* Help panel */}
       <AnimatePresence>
         {showHelp && <HelpPanel onClose={() => setShowHelp(false)} />}
@@ -548,7 +595,9 @@ export function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </SocketProvider>
     </AuthProvider>
   );

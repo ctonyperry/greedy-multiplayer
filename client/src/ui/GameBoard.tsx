@@ -10,7 +10,6 @@ import { canBank as checkCanBank } from '../engine/turn.js';
 import { validateKeep, getSelectableIndices } from '../engine/validation.js';
 import { scoreSelection } from '../engine/scoring.js';
 import { makeAIDecision, AI_STRATEGIES } from '../ai/strategies.js';
-import { gameLogger } from '../debug/GameLogger.js';
 import { useI18n } from '../i18n/index.js';
 
 interface GameBoardProps {
@@ -160,14 +159,6 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
     const strategy = AI_STRATEGIES[strategyName];
     const decision = makeAIDecision(currentTurn, player.isOnBoard, strategy, strategyName, currentState.entryThreshold);
 
-    gameLogger.aiDecision(player.name, strategyName, currentTurn.phase, decision.action, {
-      diceToKeep: decision.dice?.join(', '),
-      currentRoll: currentTurn.currentRoll?.join(', '),
-      turnScore: currentTurn.turnScore,
-      diceRemaining: currentTurn.diceRemaining,
-      isOnBoard: player.isOnBoard,
-    });
-
     const baseThinkDelay = currentTurn.phase === TurnPhase.ROLLING || currentTurn.phase === TurnPhase.STEAL_REQUIRED ? 1200 : 1000;
     const thinkDelay = baseThinkDelay + Math.floor(Math.random() * 600) - 300;
     aiNextActionTimeRef.current = now + thinkDelay + 800;
@@ -184,17 +175,14 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
           const newState = gameReducer(state, { type: 'ROLL', dice });
           const isBust = newState.turn.phase === TurnPhase.ENDED;
 
-          gameLogger.roll(aiPlayer.name, true, dice.length, dice, isBust, turnScoreBefore);
           onGameStateChangeRef.current(newState);
           setIsRolling(false);
           setIsAIActing(false);
 
           if (isBust) {
-            gameLogger.bust(aiPlayer.name, true, dice, turnScoreBefore);
             setBustEvent({ playerName: aiPlayer.name, isAI: true });
             setTimeout(() => setBustEvent(null), 1500);
             setTimeout(() => {
-              gameLogger.turnEnd(aiPlayer.name, true, 0, aiPlayer.score, aiPlayer.isOnBoard, aiPlayer.isOnBoard);
               onGameStateChangeRef.current(gameReducer(newState, { type: 'END_TURN' }));
             }, 2000);
           }
@@ -205,8 +193,6 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
         const keepScore = scoreSelection(decision.dice).score;
         const newState = gameReducer(state, { type: 'KEEP', dice: decision.dice });
         const isHotDice = newState.turn.diceRemaining === 5 && state.turn.diceRemaining !== 5;
-
-        gameLogger.keep(aiPlayer.name, true, decision.dice, keepScore, newState.turn.turnScore, newState.turn.diceRemaining, isHotDice);
 
         const keepDelay = isHotDice ? 2500 : 1800;
         aiNextActionTimeRef.current = Date.now() + keepDelay;
@@ -220,8 +206,6 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
         const wasOnBoard = aiPlayer.isOnBoard;
         const isNowOnBoard = wasOnBoard || newTotalScore >= state.entryThreshold;
 
-        gameLogger.bank(aiPlayer.name, true, state.turn.turnScore, newTotalScore, state.turn.diceRemaining, createdCarryover);
-        gameLogger.turnEnd(aiPlayer.name, true, state.turn.turnScore, newTotalScore, wasOnBoard, isNowOnBoard);
 
         setTimeout(() => {
           let newState = gameReducer(state, { type: 'BANK' });
@@ -320,7 +304,6 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
       let newState = gameReducer(gameState, { type: 'KEEP', dice: selectedDice });
       const isHotDice = newState.turn.diceRemaining === 5 && turn.diceRemaining !== 5;
 
-      gameLogger.keep(currentPlayer.name, false, selectedDice, keepScore, newState.turn.turnScore, newState.turn.diceRemaining, isHotDice);
 
       setIsRolling(true);
       setSelectedIndices([]);
@@ -331,16 +314,13 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
         newState = gameReducer(newState, { type: 'ROLL', dice });
         const isBust = newState.turn.phase === TurnPhase.ENDED;
 
-        gameLogger.roll(currentPlayer.name, false, dice.length, dice, isBust, turnScoreBefore);
         onGameStateChange(newState);
         setIsRolling(false);
 
         if (isBust) {
-          gameLogger.bust(currentPlayer.name, false, dice, turnScoreBefore);
           setBustEvent({ playerName: currentPlayer.name, isAI: false });
           setTimeout(() => setBustEvent(null), 1500);
           setTimeout(() => {
-            gameLogger.turnEnd(currentPlayer.name, false, 0, currentPlayer.score, currentPlayer.isOnBoard, currentPlayer.isOnBoard);
             onGameStateChange(gameReducer(newState, { type: 'END_TURN' }));
           }, 1500);
         }
@@ -355,16 +335,13 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
         const newState = gameReducer(gameState, { type: 'ROLL', dice });
         const isBust = newState.turn.phase === TurnPhase.ENDED;
 
-        gameLogger.roll(currentPlayer.name, false, dice.length, dice, isBust, turnScoreBefore);
         onGameStateChange(newState);
         setIsRolling(false);
 
         if (isBust) {
-          gameLogger.bust(currentPlayer.name, false, dice, turnScoreBefore);
           setBustEvent({ playerName: currentPlayer.name, isAI: false });
           setTimeout(() => setBustEvent(null), 1500);
           setTimeout(() => {
-            gameLogger.turnEnd(currentPlayer.name, false, 0, currentPlayer.score, currentPlayer.isOnBoard, currentPlayer.isOnBoard);
             onGameStateChange(gameReducer(newState, { type: 'END_TURN' }));
           }, 1500);
         }
@@ -382,8 +359,6 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
     const wasOnBoard = currentPlayer.isOnBoard;
     const isNowOnBoard = wasOnBoard || newTotalScore >= gameState.entryThreshold;
 
-    gameLogger.bank(currentPlayer.name, false, turn.turnScore, newTotalScore, turn.diceRemaining, createdCarryover);
-    gameLogger.turnEnd(currentPlayer.name, false, turn.turnScore, newTotalScore, wasOnBoard, isNowOnBoard);
 
     let newState = gameReducer(gameState, { type: 'BANK' });
     newState = gameReducer(newState, { type: 'END_TURN' });
@@ -414,15 +389,12 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
     const diceRemainingAfterKeep = newState.turn.diceRemaining;
     const isHotDice = diceRemainingAfterKeep === 5 && turn.diceRemaining !== 5;
 
-    gameLogger.keep(currentPlayer.name, false, selectedDice, keepScore, turnScoreAfterKeep, diceRemainingAfterKeep, isHotDice);
 
     const createdCarryover = diceRemainingAfterKeep > 0;
     const newTotalScore = currentPlayer.score + turnScoreAfterKeep;
     const wasOnBoard = currentPlayer.isOnBoard;
     const isNowOnBoard = wasOnBoard || newTotalScore >= gameState.entryThreshold;
 
-    gameLogger.bank(currentPlayer.name, false, turnScoreAfterKeep, newTotalScore, diceRemainingAfterKeep, createdCarryover);
-    gameLogger.turnEnd(currentPlayer.name, false, turnScoreAfterKeep, newTotalScore, wasOnBoard, isNowOnBoard);
 
     newState = gameReducer(newState, { type: 'BANK' });
     newState = gameReducer(newState, { type: 'END_TURN' });
@@ -483,6 +455,7 @@ export function GameBoard({ gameState, onGameStateChange, showHints = false }: G
           playerName={currentPlayer.name}
           isOnBoard={currentPlayer.isOnBoard}
           isAI={isAITurn}
+          isMyTurn={!isAITurn}
           turnPhase={turn.phase}
           turnScore={turn.turnScore}
           carryoverPoints={turn.carryoverPoints}

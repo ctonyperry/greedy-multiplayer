@@ -23,6 +23,11 @@ interface BustEvent {
   playerId: string;
 }
 
+interface AITakeoverInfo {
+  playerId: string;
+  aiStrategy: string;
+}
+
 interface UseGameReturn {
   // Game state
   game: Game | null;
@@ -36,6 +41,10 @@ interface UseGameReturn {
   turnStartedAt: string | null;
   effectiveTimeout: number | null;
 
+  // AI control info
+  aiControlledPlayerId: string | null;
+  isCurrentPlayerAIControlled: boolean;
+
   // Chat
   chatMessages: ChatMessage[];
 
@@ -44,6 +53,9 @@ interface UseGameReturn {
 
   // Bust event (detected atomically in socket handler)
   bustEvent: BustEvent | null;
+
+  // Pause state (all players disconnected)
+  isPaused: boolean;
 
   // Actions
   roll: () => void;
@@ -68,6 +80,7 @@ export function useGame(gameCode: string): UseGameReturn {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [lastAction, setLastAction] = useState<LastAction | null>(null);
   const [bustEvent, setBustEvent] = useState<BustEvent | null>(null);
+  const [aiControlledPlayerId, setAiControlledPlayerId] = useState<string | null>(null);
 
   const gameCodeRef = useRef(gameCode);
   gameCodeRef.current = gameCode;
@@ -77,6 +90,9 @@ export function useGame(gameCode: string): UseGameReturn {
     ? gameState.players[gameState.currentPlayerIndex]
     : null;
   const isMyTurn = currentPlayer?.id === user?.id;
+
+  // Check if current player is AI controlled
+  const isCurrentPlayerAIControlled = currentPlayer?.id === aiControlledPlayerId;
 
   // Calculate effective timeout
   const effectiveTimeout = game?.settings.maxTurnTimer || null;
@@ -160,6 +176,8 @@ export function useGame(gameCode: string): UseGameReturn {
       turnExpiresAt?: string;
     }) => {
       setTurnStartedAt(data.turnStartedAt);
+      // Clear AI control when turn changes (server clears it on turn end)
+      setAiControlledPlayerId(null);
     },
     []
   );
@@ -240,6 +258,28 @@ export function useGame(gameCode: string): UseGameReturn {
     setTimeout(() => setError(null), 5000);
   }, []);
 
+  // Handle AI takeover
+  const handleAiTakeover = useCallback((data: { playerId: string; aiStrategy: string }) => {
+    setAiControlledPlayerId(data.playerId);
+  }, []);
+
+  // Handle player resumed control
+  const handlePlayerResumedControl = useCallback((data: { playerId: string }) => {
+    if (aiControlledPlayerId === data.playerId) {
+      setAiControlledPlayerId(null);
+    }
+  }, [aiControlledPlayerId]);
+
+  // Handle game paused (all players disconnected)
+  const handleGamePaused = useCallback(() => {
+    setGame((prev) => prev ? { ...prev, isPaused: true } : prev);
+  }, []);
+
+  // Handle game resumed (player reconnected)
+  const handleGameResumed = useCallback(() => {
+    setGame((prev) => prev ? { ...prev, isPaused: false } : prev);
+  }, []);
+
   // Subscribe to socket events
   useSocketEvent('gameStateUpdate', handleGameStateUpdate);
   useSocketEvent('turnChanged', handleTurnChanged);
@@ -252,6 +292,10 @@ export function useGame(gameCode: string): UseGameReturn {
   useSocketEvent('gameStarted', handleGameStarted);
   useSocketEvent('gameEnded', handleGameEnded);
   useSocketEvent('actionError', handleActionError);
+  useSocketEvent('aiTakeover', handleAiTakeover);
+  useSocketEvent('playerResumedControl', handlePlayerResumedControl);
+  useSocketEvent('gamePaused', handleGamePaused);
+  useSocketEvent('gameResumed', handleGameResumed);
 
   // Game actions
   const roll = useCallback(() => {
@@ -293,9 +337,12 @@ export function useGame(gameCode: string): UseGameReturn {
     currentPlayer,
     turnStartedAt,
     effectiveTimeout,
+    aiControlledPlayerId,
+    isCurrentPlayerAIControlled,
     chatMessages,
     lastAction,
     bustEvent,
+    isPaused: game?.isPaused || false,
     roll,
     keep,
     bank,
