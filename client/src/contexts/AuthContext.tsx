@@ -15,6 +15,8 @@ import {
 import {
   initializeFirebase,
   signInWithGoogle,
+  signInWithEmail,
+  signUpWithEmail,
   signOutFirebase,
   onAuthChange,
   getIdToken,
@@ -40,8 +42,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isGuest: boolean;
-  login: () => Promise<void>;
-  loginAsGuest: (name?: string) => void;
+  loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  loginAsGuest: (name: string) => void;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   updateDisplayName: (name: string) => void;
@@ -109,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Login with Google
    */
-  const login = useCallback(async () => {
+  const loginWithGoogle = useCallback(async () => {
     try {
       setIsLoading(true);
       const fbUser = await signInWithGoogle();
@@ -125,12 +129,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Login as guest
+   * Login with email/password
    */
-  const loginAsGuest = useCallback((name?: string) => {
+  const handleLoginWithEmail = useCallback(async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      const fbUser = await signInWithEmail(email, password);
+      setUser(firebaseUserToUser(fbUser));
+      setIsGuest(false);
+      localStorage.removeItem(GUEST_SESSION_KEY);
+    } catch (error) {
+      console.error('Email login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Sign up with email/password
+   */
+  const handleSignUpWithEmail = useCallback(async (email: string, password: string, displayName: string) => {
+    try {
+      setIsLoading(true);
+      const fbUser = await signUpWithEmail(email, password, displayName);
+      setUser(firebaseUserToUser(fbUser));
+      setIsGuest(false);
+      localStorage.removeItem(GUEST_SESSION_KEY);
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Login as guest with a name
+   */
+  const loginAsGuest = useCallback((name: string) => {
     const guestUser: User = {
       id: `guest-${crypto.randomUUID()}`,
-      name: name || generateName(),
+      name: name.trim() || generateName(),
       email: '',
       isGuest: true,
     };
@@ -191,7 +231,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     isLoading,
     isGuest,
-    login,
+    loginWithGoogle,
+    loginWithEmail: handleLoginWithEmail,
+    signUpWithEmail: handleSignUpWithEmail,
     loginAsGuest,
     logout,
     getAccessToken,

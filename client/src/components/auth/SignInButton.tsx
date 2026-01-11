@@ -11,13 +11,13 @@ interface SignInButtonProps {
 }
 
 export function SignInButton({ className = '' }: SignInButtonProps) {
-  const { login, isLoading } = useAuth();
+  const { loginWithGoogle, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     setError(null);
     try {
-      await login();
+      await loginWithGoogle();
     } catch (err: unknown) {
       console.error('Sign-in error:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);

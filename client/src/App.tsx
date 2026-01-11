@@ -6,7 +6,7 @@ import { ToastProvider } from './contexts/ToastContext.js';
 import { setTokenGetter, api } from './services/api.js';
 import { GameOver } from './ui/GameOver.js';
 import { HelpPanel } from './ui/HelpPanel.js';
-import { SignInButton } from './components/auth/index.js';
+import { AuthModal } from './components/auth/index.js';
 import { CreateGame, JoinGame, GameLobby } from './components/lobby/index.js';
 import { MultiplayerGameBoard, ConnectionStatus } from './components/multiplayer/index.js';
 import { useI18n } from './i18n/index.js';
@@ -29,7 +29,7 @@ type Screen =
  */
 function AppContent() {
   const { t } = useI18n();
-  const { user, isAuthenticated, isLoading, isGuest, logout, loginAsGuest, getAccessToken } = useAuth();
+  const { user, isAuthenticated, isLoading, isGuest, logout, getAccessToken } = useAuth();
   const { activeGames, addGame, removeGame, refreshGames } = useActiveGames();
   const [screen, setScreen] = useState<Screen>('start');
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -53,20 +53,19 @@ function AppContent() {
     }
   }, []);
 
-  // Handle pending join code - auto-login as guest if needed
+  // Handle screen transitions based on auth state
   useEffect(() => {
-    if (pendingJoinCode && !isLoading) {
-      if (isAuthenticated) {
-        // Already authenticated, go to join screen
-        setScreen('join');
-      } else {
-        // Not authenticated, auto-login as guest and proceed
-        loginAsGuest();
+    if (!isLoading) {
+      if (isAuthenticated && screen === 'start') {
+        // Authenticated, go to home (or join if pending code)
+        if (pendingJoinCode) {
+          setScreen('join');
+        } else {
+          setScreen('home');
+        }
       }
-    } else if (isAuthenticated && screen === 'start' && !pendingJoinCode) {
-      setScreen('home');
     }
-  }, [isAuthenticated, isLoading, screen, pendingJoinCode, loginAsGuest]);
+  }, [isAuthenticated, isLoading, screen, pendingJoinCode]);
 
   // Refresh active games when navigating to home screen
   useEffect(() => {
@@ -262,7 +261,7 @@ function AppContent() {
       {/* Main content */}
       <main style={{ flex: 1, overflow: 'auto' }}>
         <AnimatePresence mode="wait">
-          {/* Start Screen - Choose sign in or play offline */}
+          {/* Start Screen - Authentication options */}
           {screen === 'start' && (
             <motion.div
               key="start"
@@ -273,58 +272,12 @@ function AppContent() {
             >
               <div
                 style={{
-                  maxWidth: '500px',
+                  maxWidth: '400px',
                   margin: '0 auto',
                   padding: 'var(--space-6) var(--space-4)',
                 }}
               >
-                <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
-                  <h2
-                    style={{
-                      fontSize: 'var(--font-size-2xl)',
-                      marginBottom: 'var(--space-3)',
-                    }}
-                  >
-                    Welcome to Greedy
-                  </h2>
-                  <p style={{ color: 'var(--color-text-secondary)' }}>
-                    A classic dice game of risk and reward
-                  </p>
-                </div>
-
-                {/* Sign in for multiplayer */}
-                {!isLoading && (
-                  <div
-                    className="card"
-                    style={{
-                      textAlign: 'center',
-                    }}
-                  >
-                    <h3 style={{ marginBottom: 'var(--space-3)' }}>Play Online</h3>
-                    <p
-                      style={{
-                        color: 'var(--color-text-secondary)',
-                        marginBottom: 'var(--space-4)',
-                        fontSize: 'var(--font-size-sm)',
-                      }}
-                    >
-                      Play with friends online
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                          loginAsGuest();
-                          setScreen('home');
-                        }}
-                        style={{ width: '100%' }}
-                      >
-                        Play as Guest
-                      </button>
-                      <SignInButton />
-                    </div>
-                  </div>
-                )}
+                {!isLoading && <AuthModal />}
               </div>
             </motion.div>
           )}

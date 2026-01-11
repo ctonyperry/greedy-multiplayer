@@ -7,6 +7,9 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   signOut,
   onAuthStateChanged,
   type Auth,
@@ -50,6 +53,20 @@ export function getFirebaseAuth(): Auth {
 export async function signInWithGoogle(): Promise<FirebaseUser> {
   const auth = getFirebaseAuth();
   const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<FirebaseUser> {
+  const auth = getFirebaseAuth();
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  return result.user;
+}
+
+export async function signUpWithEmail(email: string, password: string, displayName: string): Promise<FirebaseUser> {
+  const auth = getFirebaseAuth();
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  // Set the display name
+  await updateProfile(result.user, { displayName });
   return result.user;
 }
 
