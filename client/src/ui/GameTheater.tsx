@@ -104,8 +104,9 @@ export function GameTheater({
   const entryProgress = !isOnBoard ? Math.min(100, (ownScore / entryThreshold) * 100) : 100;
   const pointsNeeded = Math.max(0, entryThreshold - ownScore);
 
-  // Calculate total that would be banked
-  const totalToBank = turnScore + selectionScore;
+  // Calculate total that would be banked (include unclaimed carryover if applicable)
+  const unclaimedCarryover = hasCarryover && !carryoverClaimed ? carryoverPoints : 0;
+  const totalToBank = turnScore + selectionScore + unclaimedCarryover;
 
   // Get instruction text
   const getInstruction = (): string => {
