@@ -34,7 +34,7 @@ async function screenshot(page, viewport, name) {
   const filename = `${name.replace(/\s+/g, '-').toLowerCase()}.png`;
   await page.screenshot({
     path: path.join(dir, filename),
-    fullPage: false,
+    fullPage: true,
   });
   console.log(`  ✓ ${viewport}/${filename}`);
 }
@@ -140,17 +140,27 @@ async function captureFlows(browser, viewportName, viewportSize) {
     // Add AI player
     const addAIButton = page.getByRole('button', { name: /add ai/i });
     if (await addAIButton.isVisible()) {
+      await addAIButton.scrollIntoViewIfNeeded();
       await addAIButton.click();
       await waitForStable(page);
       await screenshot(page, viewportName, '07-add-ai-form');
 
       // Submit AI player (name should be auto-filled)
-      const addButton = page.getByRole('button', { name: /^add$/i });
+      // Look for the submit button in the AI form
+      const addButton = page.locator('button:has-text("Add")').last();
+      await addButton.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
+
       if (await addButton.isVisible()) {
         await addButton.click();
         await waitForStable(page);
+        await page.waitForTimeout(1000); // Wait for AI to be added
         await screenshot(page, viewportName, '08-lobby-with-ai');
+      } else {
+        console.log('    ⚠ Add button not found');
       }
+    } else {
+      console.log('    ⚠ Add AI button not found');
     }
 
     // ==========================================
@@ -160,54 +170,180 @@ async function captureFlows(browser, viewportName, viewportSize) {
 
     const startButton = page.getByRole('button', { name: /start game/i });
     if (await startButton.isVisible()) {
+      await startButton.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
       await startButton.click();
+      console.log('    ✓ Clicked Start Game');
       await waitForStable(page);
-      await page.waitForTimeout(2000); // Wait for game to initialize
+      await page.waitForTimeout(3000); // Wait for game to initialize
+    } else {
+      console.log('    ⚠ Start Game button not found - checking if game already started');
     }
 
     // ==========================================
-    // 7. GAMEPLAY SCREENS
+    // 7. GAMEPLAY SCREENS - Play multiple rounds
     // ==========================================
-    console.log('7. Gameplay');
+    console.log('7. Gameplay (playing multiple rounds)');
 
     // Initial game state
     await waitForStable(page);
     await screenshot(page, viewportName, '09-game-initial');
 
-    // Try to capture various game states
-    // Roll dice if it's our turn
-    const rollButton = page.getByRole('button', { name: /roll/i });
-    if (await rollButton.isVisible() && await rollButton.isEnabled()) {
-      await rollButton.click();
-      await page.waitForTimeout(1500); // Wait for roll animation
-      await screenshot(page, viewportName, '10-after-roll');
+    // Helper to select scoring dice (click on 1s and 5s preferably)
+    async function selectScoringDice(page) {
+      // Try to click on non-disabled, non-dimmed dice
+      const dice = page.locator('button.die:not(.disabled):not(.dimmed):not(.selected)');
+      const count = await dice.count();
+      let selected = 0;
 
-      // Try to select a die
-      const dice = page.locator('.die:not(.disabled):not(.dimmed)');
-      const diceCount = await dice.count();
-      if (diceCount > 0) {
-        await dice.first().click();
-        await waitForStable(page);
-        await screenshot(page, viewportName, '11-die-selected');
+      for (let i = 0; i < count && selected < 3; i++) {
+        try {
+          const die = dice.nth(i);
+          if (await die.isVisible() && await die.isEnabled()) {
+            await die.click();
+            selected++;
+            await page.waitForTimeout(300);
+          }
+        } catch (e) {
+          // Die might have become unavailable
+        }
+      }
+      return selected;
+    }
+
+    // Helper to wait for our turn
+    async function waitForOurTurn(page, maxWait = 15000) {
+      const startTime = Date.now();
+      while (Date.now() - startTime < maxWait) {
+        const rollButton = page.getByRole('button', { name: /^roll|roll \d/i });
+        const riskButton = page.getByRole('button', { name: /risk it/i });
+
+        const canRoll = await rollButton.isVisible().catch(() => false) &&
+                       await rollButton.isEnabled().catch(() => false);
+        const canRisk = await riskButton.isVisible().catch(() => false);
+
+        if (canRoll || canRisk) {
+          return true;
+        }
+        await page.waitForTimeout(500);
+      }
+      return false;
+    }
+
+    let screenshotNum = 10;
+    let humanTurns = 0;
+    let aiTurns = 0;
+    const maxTotalTurns = 12;
+
+    for (let turn = 0; turn < maxTotalTurns; turn++) {
+      // Check for game over first
+      const gameOver = page.locator('text=/game over/i');
+      const winner = page.locator('text=/winner/i');
+
+      if (await gameOver.isVisible().catch(() => false) ||
+          await winner.isVisible().catch(() => false)) {
+        await screenshot(page, viewportName, `${screenshotNum++}-game-over`);
+        break;
+      }
+
+      // Check if it's our turn
+      const rollButton = page.getByRole('button', { name: /^roll|roll \d/i });
+      const riskButton = page.getByRole('button', { name: /risk it/i });
+
+      const canRoll = await rollButton.isVisible().catch(() => false) &&
+                     await rollButton.isEnabled().catch(() => false);
+      const canRisk = await riskButton.isVisible().catch(() => false);
+
+      if (canRoll || canRisk) {
+        humanTurns++;
+        console.log(`    Human turn ${humanTurns}...`);
+
+        // Handle Risk It / Play Safe choice
+        if (canRisk) {
+          await screenshot(page, viewportName, `${screenshotNum++}-carryover-choice`);
+          await riskButton.click();
+          await page.waitForTimeout(1500);
+          await screenshot(page, viewportName, `${screenshotNum++}-risk-it-roll`);
+        } else {
+          // Normal roll
+          await rollButton.click();
+          await page.waitForTimeout(1500);
+          await screenshot(page, viewportName, `${screenshotNum++}-human-after-roll`);
+        }
+
+        // Select some dice
+        const selected = await selectScoringDice(page);
+        if (selected > 0) {
+          await waitForStable(page);
+          await screenshot(page, viewportName, `${screenshotNum++}-human-dice-selected`);
+        }
 
         // Check for bank button
         const bankButton = page.getByRole('button', { name: /bank/i });
-        if (await bankButton.isVisible()) {
-          await screenshot(page, viewportName, '12-bank-option');
+        const canBank = await bankButton.isVisible().catch(() => false) &&
+                       await bankButton.isEnabled().catch(() => false);
+
+        // Alternate between banking and rolling again
+        if (canBank && humanTurns % 2 === 0) {
+          await screenshot(page, viewportName, `${screenshotNum++}-human-bank-option`);
+          await bankButton.click();
+          await page.waitForTimeout(1000);
+          await screenshot(page, viewportName, `${screenshotNum++}-human-after-bank`);
+        } else {
+          // Try to roll again
+          const rollAgainButton = page.getByRole('button', { name: /^roll|roll \d/i });
+          if (await rollAgainButton.isVisible().catch(() => false) &&
+              await rollAgainButton.isEnabled().catch(() => false)) {
+            await rollAgainButton.click();
+            await page.waitForTimeout(1500);
+            await screenshot(page, viewportName, `${screenshotNum++}-human-second-roll`);
+
+            // Select more dice
+            await selectScoringDice(page);
+            await waitForStable(page);
+
+            // Check for hot dice
+            const hotDice = page.getByRole('button', { name: /hot dice/i });
+            if (await hotDice.isVisible().catch(() => false)) {
+              await screenshot(page, viewportName, `${screenshotNum++}-hot-dice`);
+              await hotDice.click();
+              await page.waitForTimeout(1500);
+              await screenshot(page, viewportName, `${screenshotNum++}-hot-dice-roll`);
+            }
+
+            // Try to bank
+            if (await bankButton.isVisible().catch(() => false) &&
+                await bankButton.isEnabled().catch(() => false)) {
+              await bankButton.click();
+              await page.waitForTimeout(1000);
+            }
+          }
         }
 
-        // Roll again
-        if (await rollButton.isVisible() && await rollButton.isEnabled()) {
-          await rollButton.click();
-          await page.waitForTimeout(1500);
-          await screenshot(page, viewportName, '13-second-roll');
+        // Check for bust
+        const bust = page.locator('text=/bust/i');
+        if (await bust.isVisible().catch(() => false)) {
+          await screenshot(page, viewportName, `${screenshotNum++}-human-bust`);
         }
+
+      } else {
+        // AI's turn - wait and capture
+        aiTurns++;
+        console.log(`    AI turn ${aiTurns}...`);
+
+        await screenshot(page, viewportName, `${screenshotNum++}-ai-turn-${aiTurns}`);
+
+        // Wait for AI to complete their turn
+        await waitForOurTurn(page, 10000);
+        await page.waitForTimeout(500);
       }
+
+      await page.waitForTimeout(500);
     }
 
-    // Wait for AI turn if applicable
-    await page.waitForTimeout(3000);
-    await screenshot(page, viewportName, '14-ai-turn');
+    // Final game state
+    await waitForStable(page);
+    await screenshot(page, viewportName, `${screenshotNum++}-final-state`);
 
     // ==========================================
     // 8. HELP PANEL
