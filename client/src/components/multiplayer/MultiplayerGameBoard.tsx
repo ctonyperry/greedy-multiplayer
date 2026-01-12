@@ -425,16 +425,14 @@ export function MultiplayerGameBoard({
         <button
           onClick={() => setShowMenu(!showMenu)}
           style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
+            background: 'transparent',
+            border: 'none',
             cursor: 'pointer',
             padding: 'var(--space-2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 40,
-            height: 40,
+            color: 'var(--color-text-secondary)',
           }}
           aria-label="Game menu"
         >
