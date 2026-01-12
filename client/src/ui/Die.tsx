@@ -44,17 +44,9 @@ export function Die({
     lg: { width: 72, height: 72 },
   };
 
-  const pipSize = {
-    sm: 8,
-    md: 10,
-    lg: 14,
-  };
-
-  const faceSize = {
-    sm: 38,
-    md: 50,
-    lg: 58,
-  };
+  // Use percentage-based sizes that scale with the die
+  const pipSizePercent = '18%';
+  const faceSizePercent = '80%';
 
   // Pip positions for each die value
   const getPipPositions = (val: DieValue): string[] => {
@@ -132,8 +124,8 @@ export function Die({
       <div
         className="die-face"
         style={{
-          width: faceSize[size],
-          height: faceSize[size],
+          width: faceSizePercent,
+          height: faceSizePercent,
           position: 'relative',
         }}
         aria-hidden="true"
@@ -144,13 +136,13 @@ export function Die({
             className={`pip ${position}`}
             style={{
               position: 'absolute',
-              width: pipSize[size],
-              height: pipSize[size],
+              width: pipSizePercent,
+              height: pipSizePercent,
               background: dimmed
                 ? 'rgba(255, 255, 255, 0.4)'
                 : 'var(--color-background)',
               borderRadius: '50%',
-              ...getPipStyle(position, size),
+              ...getPipStyle(position),
             }}
           />
         ))}
@@ -159,9 +151,9 @@ export function Die({
   );
 }
 
-// Helper to get pip position styles
-function getPipStyle(position: string, size: 'sm' | 'md' | 'lg'): React.CSSProperties {
-  const offset = size === 'sm' ? '12%' : '10%';
+// Helper to get pip position styles (percentage-based for responsive scaling)
+function getPipStyle(position: string): React.CSSProperties {
+  const offset = '10%';
 
   const styles: Record<string, React.CSSProperties> = {
     center: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
