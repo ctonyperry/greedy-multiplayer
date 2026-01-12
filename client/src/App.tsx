@@ -6,7 +6,8 @@ import { ToastProvider } from './contexts/ToastContext.js';
 import { setTokenGetter, api } from './services/api.js';
 import { GameOver } from './ui/GameOver.js';
 import { HelpPanel } from './ui/HelpPanel.js';
-import { AuthModal } from './components/auth/index.js';
+import { StartScreen } from './components/auth/index.js';
+import { HomeScreen } from './components/home/HomeScreen.js';
 import { CreateGame, JoinGame, GameLobby } from './components/lobby/index.js';
 import { MultiplayerGameBoard, ConnectionStatus } from './components/multiplayer/index.js';
 import { useI18n } from './i18n/index.js';
@@ -308,15 +309,7 @@ function AppContent() {
               exit={{ opacity: 0 }}
               style={{ minHeight: '100%' }}
             >
-              <div
-                style={{
-                  maxWidth: '400px',
-                  margin: '0 auto',
-                  padding: 'var(--space-6) var(--space-4)',
-                }}
-              >
-                {!isLoading && <AuthModal />}
-              </div>
+              {!isLoading && <StartScreen />}
             </motion.div>
           )}
 
@@ -329,187 +322,14 @@ function AppContent() {
               exit={{ opacity: 0 }}
               style={{ minHeight: '100%' }}
             >
-              <div
-                style={{
-                  maxWidth: '400px',
-                  margin: '0 auto',
-                  padding: 'var(--space-6) var(--space-4)',
-                }}
-              >
-                {/* Welcome header - Figma style */}
-                <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
-                  <h2 style={{
-                    fontSize: 'var(--font-size-2xl)',
-                    fontWeight: 'var(--font-weight-bold)',
-                    marginBottom: 'var(--space-2)',
-                  }}>
-                    Welcome, {user?.name || 'Player'}!
-                  </h2>
-                  <p style={{
-                    color: 'var(--color-text-secondary)',
-                    fontSize: 'var(--font-size-lg)',
-                  }}>
-                    What would you like to do?
-                  </p>
-                </div>
-
-                {/* Active Games - Resume Game */}
-                {activeGames.length > 0 && (
-                  <div
-                    style={{
-                      marginBottom: 'var(--space-5)',
-                      padding: 'var(--space-4)',
-                      backgroundColor: 'rgba(30, 41, 59, 0.5)',
-                      borderRadius: 'var(--radius-2xl)',
-                      border: '2px solid rgba(16, 185, 129, 0.3)',
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: 'var(--color-primary)',
-                        marginBottom: 'var(--space-3)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        fontWeight: 'var(--font-weight-semibold)',
-                      }}
-                    >
-                      Resume Game
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                      {activeGames.map((activeGame) => (
-                        <div
-                          key={activeGame.code}
-                          style={{
-                            display: 'flex',
-                            gap: 'var(--space-2)',
-                            alignItems: 'stretch',
-                          }}
-                        >
-                          <button
-                            className="btn"
-                            onClick={() => {
-                              const status = activeGame.game?.status || 'waiting';
-                              handleResumeGame(activeGame.code, status as 'waiting' | 'playing');
-                            }}
-                            style={{
-                              flex: 1,
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              padding: 'var(--space-3) var(--space-4)',
-                              background: 'rgba(30, 41, 59, 0.7)',
-                              border: '1px solid var(--color-border)',
-                              borderRadius: 'var(--radius-xl)',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                              <span
-                                style={{
-                                  fontFamily: 'monospace',
-                                  fontWeight: 'var(--font-weight-bold)',
-                                  color: 'var(--color-primary)',
-                                }}
-                              >
-                                {activeGame.code}
-                              </span>
-                              {activeGame.game && (
-                                <span
-                                  style={{
-                                    fontSize: 'var(--font-size-xs)',
-                                    color: activeGame.game.status === 'playing'
-                                      ? 'var(--color-primary)'
-                                      : 'var(--color-text-secondary)',
-                                    padding: '2px 8px',
-                                    backgroundColor: activeGame.game.status === 'playing'
-                                      ? 'var(--color-primary-light)'
-                                      : 'rgba(30, 41, 59, 0.5)',
-                                    borderRadius: 'var(--radius-full)',
-                                    fontWeight: 'var(--font-weight-medium)',
-                                  }}
-                                >
-                                  {activeGame.game.status === 'playing' ? 'In Progress' : 'Waiting'}
-                                </span>
-                              )}
-                            </div>
-                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                              {activeGame.game
-                                ? `${activeGame.game.players.length} player${activeGame.game.players.length !== 1 ? 's' : ''}`
-                                : 'Resume'
-                              }
-                            </span>
-                          </button>
-                          <button
-                            className="btn btn-ghost"
-                            onClick={() => handleLeaveGame(activeGame.code)}
-                            style={{
-                              padding: 'var(--space-2) var(--space-3)',
-                              color: 'var(--color-text-secondary)',
-                              minWidth: 44,
-                            }}
-                            title="Leave game"
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <line x1="18" y1="6" x2="6" y2="18" />
-                              <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Main action buttons - Figma style with icons */}
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--space-3)',
-                  }}
-                >
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleCreateGame}
-                    style={{
-                      padding: 'var(--space-5) var(--space-4)',
-                      fontSize: 'var(--font-size-xl)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 'var(--space-3)',
-                      borderRadius: 'var(--radius-2xl)',
-                    }}
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Create Game
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleJoinGame}
-                    style={{
-                      padding: 'var(--space-5) var(--space-4)',
-                      fontSize: 'var(--font-size-xl)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 'var(--space-3)',
-                      borderRadius: 'var(--radius-2xl)',
-                    }}
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                    Join Game
-                  </button>
-                </div>
-              </div>
+              <HomeScreen
+                userName={user?.name || 'Player'}
+                onCreateGame={handleCreateGame}
+                onJoinGame={handleJoinGame}
+                activeGames={activeGames}
+                onResumeGame={handleResumeGame}
+                onLeaveGame={handleLeaveGame}
+              />
             </motion.div>
           )}
 

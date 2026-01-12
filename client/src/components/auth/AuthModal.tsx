@@ -131,23 +131,15 @@ export function AuthModal({ onClose }: AuthModalProps) {
   if (mode === 'options') {
     return (
       <div style={containerStyle}>
-        {/* Welcome header */}
-        <div style={{ textAlign: 'center', marginBottom: 'var(--space-4)' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-bold)',
-            margin: '0 0 var(--space-2) 0',
-          }}>
-            Welcome to Greedy
-          </h2>
-          <p style={{
-            color: 'var(--color-text-secondary)',
-            fontSize: 'var(--font-size-lg)',
-            margin: 0,
-          }}>
-            Sign in to compete with friends
-          </p>
-        </div>
+        {/* Header */}
+        <p style={{
+          textAlign: 'center',
+          color: 'var(--color-text-secondary)',
+          fontSize: 'var(--font-size-lg)',
+          margin: '0 0 var(--space-4) 0',
+        }}>
+          Sign in to compete with friends
+        </p>
 
         {error && (
           <div style={{

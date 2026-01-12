@@ -189,7 +189,7 @@ export function GameTheater({
         backdropFilter: 'blur(8px)',
       }}
     >
-      {/* Header - Player name and instruction */}
+      {/* Header - Player name, turn score, and entry progress */}
       <header
         style={{
           padding: 'var(--space-4)',
@@ -228,15 +228,110 @@ export function GameTheater({
             </span>
           )}
         </h2>
-        <p
-          style={{
-            margin: 'var(--space-2) 0 0 0',
-            fontSize: 'var(--font-size-base)',
-            color: isBust ? '#ef4444' : 'var(--color-text-secondary)',
-          }}
-        >
-          {getInstruction()}
-        </p>
+
+        {/* Turn score with entry progress (compact) */}
+        {isMyTurn && turnPhase !== TurnPhase.ENDED && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-2)',
+              marginTop: 'var(--space-2)',
+              fontSize: 'var(--font-size-sm)',
+              color: 'var(--color-text-secondary)',
+              flexWrap: 'wrap',
+            }}
+          >
+            <span>
+              Turn score: <strong style={{ color: 'var(--color-text)' }}>{(turnScore + selectionScore).toLocaleString()}</strong>
+            </span>
+
+            {/* Carryover pot indicator */}
+            {hasCarryover && !carryoverClaimed && carryoverPoints > 0 && (
+              <>
+                <span style={{ color: 'var(--color-border)' }}>•</span>
+                <span style={{ color: '#f59e0b', fontWeight: 'var(--font-weight-medium)' }}>
+                  🔥 {carryoverPoints.toLocaleString()} pot
+                </span>
+              </>
+            )}
+
+            {/* Entry threshold progress (when not on board) */}
+            {!isOnBoard && (
+              <>
+                <span style={{ color: 'var(--color-border)' }}>•</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  {/* Lock icon */}
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={entryProgress >= 100 ? '#22c55e' : '#f59e0b'}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    {entryProgress >= 100 ? (
+                      // Unlocked
+                      <>
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                      </>
+                    ) : (
+                      // Locked
+                      <>
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </>
+                    )}
+                  </svg>
+                  {/* Mini progress bar */}
+                  <div
+                    style={{
+                      width: 60,
+                      height: 6,
+                      background: 'rgba(30, 41, 59, 0.5)',
+                      borderRadius: 'var(--radius-full)',
+                      overflow: 'hidden',
+                      border: '1px solid var(--color-border)',
+                    }}
+                  >
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${entryProgress}%` }}
+                      style={{
+                        height: '100%',
+                        background: entryProgress >= 100
+                          ? '#22c55e'
+                          : 'linear-gradient(90deg, #f59e0b, #10b981)',
+                        borderRadius: 'var(--radius-full)',
+                      }}
+                    />
+                  </div>
+                  {/* Points needed */}
+                  <span style={{ color: entryProgress >= 100 ? '#22c55e' : '#f59e0b', fontWeight: 'var(--font-weight-medium)' }}>
+                    {entryProgress >= 100 ? 'Ready to bank!' : `${pointsNeeded.toLocaleString()} to bank`}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Instruction text (only when needed) */}
+        {((!isMyTurn || turnPhase === TurnPhase.ENDED) || (isAI || isAIActing)) && (
+          <p
+            style={{
+              margin: 'var(--space-2) 0 0 0',
+              fontSize: 'var(--font-size-base)',
+              color: isBust ? '#ef4444' : 'var(--color-text-secondary)',
+            }}
+          >
+            {getInstruction()}
+          </p>
+        )}
       </header>
 
       {/* Dice Area */}
@@ -405,69 +500,6 @@ export function GameTheater({
           )}
         </AnimatePresence>
       </div>
-
-      {/* Entry Threshold Progress (when not on board) */}
-      {!isOnBoard && isMyTurn && turnPhase !== TurnPhase.ENDED && (
-        <div
-          style={{
-            padding: 'var(--space-4)',
-            background: 'rgba(245, 158, 11, 0.1)',
-            borderTop: '1px solid rgba(245, 158, 11, 0.2)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 'var(--radius-full)',
-                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 'var(--font-size-xl)',
-              }}
-            >
-              🎯
-            </div>
-            <div>
-              <div style={{ fontWeight: 'var(--font-weight-semibold)', color: '#f59e0b', fontSize: 'var(--font-size-base)' }}>
-                Getting on the Board
-              </div>
-              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                Score {entryThreshold.toLocaleString()}+ in one turn to start
-              </div>
-            </div>
-          </div>
-          {/* Progress bar */}
-          <div
-            style={{
-              height: 10,
-              background: 'rgba(30, 41, 59, 0.5)',
-              borderRadius: 'var(--radius-full)',
-              overflow: 'hidden',
-              marginBottom: 'var(--space-2)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${entryProgress}%` }}
-              style={{
-                height: '100%',
-                background: entryProgress >= 100
-                  ? 'linear-gradient(90deg, #22c55e, #10b981)'
-                  : 'linear-gradient(90deg, #f59e0b, #10b981)',
-                borderRadius: 'var(--radius-full)',
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-sm)' }}>
-            <span style={{ color: 'var(--color-text-secondary)' }}>{ownScore.toLocaleString()} / {entryThreshold.toLocaleString()}</span>
-            <span style={{ color: '#f59e0b', fontWeight: 'var(--font-weight-medium)' }}>{pointsNeeded.toLocaleString()} more to go!</span>
-          </div>
-        </div>
-      )}
 
       {/* Action Buttons */}
       {isMyTurn && turnPhase !== TurnPhase.ENDED && (
