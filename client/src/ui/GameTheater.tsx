@@ -232,13 +232,13 @@ export function GameTheater({
       </header>
 
       {/* Dice Area */}
-      <div style={{ padding: 'var(--space-4)', flex: 1 }}>
+      <div style={{ padding: 'var(--space-4)', flex: 1, overflow: 'hidden' }}>
         <div
           style={{
             display: 'flex',
-            gap: 'var(--space-2)',
+            gap: 'clamp(4px, 1vw, var(--space-2))',
             justifyContent: 'center',
-            flexWrap: 'wrap',
+            flexWrap: 'nowrap',
             minHeight: 'calc(var(--die-size) + var(--space-2))',
             alignItems: 'center',
           }}
@@ -302,14 +302,17 @@ export function GameTheater({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 'var(--space-2)',
+                gap: 'clamp(4px, 1vw, var(--space-2))',
                 marginTop: 'var(--space-3)',
                 padding: 'var(--space-2)',
                 background: 'var(--color-surface-elevated)',
                 borderRadius: 'var(--radius-md)',
+                maxWidth: '100%',
+                overflowX: 'auto',
+                flexWrap: 'nowrap',
               }}
             >
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 Selected:
               </span>
               {selectedIndices.map((index) => (
@@ -317,7 +320,7 @@ export function GameTheater({
                   key={`selected-${index}`}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  style={{ transform: 'scale(0.7)' }}
+                  style={{ transform: 'scale(0.7)', flexShrink: 0 }}
                 >
                   <Die
                     value={currentRoll[index]}
@@ -331,6 +334,8 @@ export function GameTheater({
                   fontSize: 'var(--font-size-sm)',
                   fontWeight: 'var(--font-weight-bold)',
                   color: 'var(--color-success)',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 +{selectionScore}
@@ -349,21 +354,24 @@ export function GameTheater({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--space-2)',
+                justifyContent: 'flex-start',
+                gap: 'clamp(2px, 0.5vw, var(--space-2))',
                 marginTop: 'var(--space-2)',
                 padding: 'var(--space-2)',
                 background: 'var(--color-surface-elevated)',
                 borderRadius: 'var(--radius-md)',
+                maxWidth: '100%',
+                overflowX: 'auto',
+                flexWrap: 'nowrap',
               }}
             >
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                 Kept:
               </span>
               {keptDice.map((value, i) => (
                 <motion.div
                   key={`kept-${i}`}
-                  style={{ transform: 'scale(0.6)' }}
+                  style={{ transform: 'scale(0.55)', flexShrink: 0, margin: '-4px' }}
                 >
                   <Die value={value} disabled />
                 </motion.div>
@@ -373,6 +381,8 @@ export function GameTheater({
                   fontSize: 'var(--font-size-sm)',
                   fontWeight: 'var(--font-weight-bold)',
                   color: 'var(--color-primary)',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {turnScore.toLocaleString()} pts

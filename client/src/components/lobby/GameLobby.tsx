@@ -325,15 +325,17 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 'var(--space-3)',
+          gap: 'var(--space-2)',
           marginBottom: 'var(--space-4)',
+          maxWidth: '100%',
+          overflow: 'hidden',
         }}>
           <motion.span
             style={{
-              fontSize: 'var(--font-size-4xl)',
+              fontSize: 'clamp(1.5rem, 10vw, 3rem)',
               fontFamily: 'monospace',
               fontWeight: 'var(--font-weight-bold)',
-              letterSpacing: '0.15em',
+              letterSpacing: '0.1em',
               color: 'var(--color-primary)',
             }}
           >

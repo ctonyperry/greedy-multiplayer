@@ -431,14 +431,18 @@ export function MultiplayerGameBoard({
             cursor: 'pointer',
             padding: 'var(--space-2)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '3px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
           }}
           aria-label="Game menu"
         >
-          <span style={{ width: 16, height: 2, backgroundColor: 'var(--color-text)', borderRadius: 1 }} />
-          <span style={{ width: 16, height: 2, backgroundColor: 'var(--color-text)', borderRadius: 1 }} />
-          <span style={{ width: 16, height: 2, backgroundColor: 'var(--color-text)', borderRadius: 1 }} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
         </button>
 
         {/* Menu dropdown */}

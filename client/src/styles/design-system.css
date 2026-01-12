@@ -124,11 +124,18 @@
   --z-toast: 500;
 
   /* Component-specific */
-  --die-size: 2.75rem;          /* 44px on small mobile */
+  --die-size: 2.5rem;           /* 40px on very small mobile */
   --die-size-lg: 4rem;          /* 64px on tablet+ */
   --header-height: 3.5rem;      /* 56px */
   --sidebar-width: 320px;
   --max-content-width: 1200px;
+}
+
+/* Very small phones (320px) */
+@media (min-width: 360px) {
+  :root {
+    --die-size: 2.75rem;        /* 44px on regular mobile */
+  }
 }
 
 /* ============================================
