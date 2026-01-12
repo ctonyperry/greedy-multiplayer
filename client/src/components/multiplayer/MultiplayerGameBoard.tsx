@@ -457,9 +457,10 @@ export function MultiplayerGameBoard({
                   right: 0,
                   top: '100%',
                   marginTop: 'var(--space-1)',
-                  backgroundColor: 'var(--color-surface-elevated)',
+                  backgroundColor: '#2a2a4a',
                   borderRadius: 'var(--radius-md)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                  border: '1px solid rgba(255,255,255,0.1)',
                   minWidth: 160,
                   zIndex: 100,
                   overflow: 'hidden',
@@ -477,7 +478,7 @@ export function MultiplayerGameBoard({
                     color: 'var(--color-text)',
                     fontSize: 'var(--font-size-sm)',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-surface)'}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   Leave Game
@@ -498,7 +499,7 @@ export function MultiplayerGameBoard({
                       color: 'var(--color-danger)',
                       fontSize: 'var(--font-size-sm)',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-surface)'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     Forfeit Game
