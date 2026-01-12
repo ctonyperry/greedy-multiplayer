@@ -219,10 +219,10 @@ function AppContent() {
           <button
             onClick={() => setShowHelp(true)}
             className="btn btn-ghost btn-sm"
-            style={{ minHeight: 40, minWidth: 40, padding: 'var(--space-1)' }}
+            style={{ minHeight: 40, minWidth: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             aria-label={t('howToPlay')}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
               <circle cx="12" cy="12" r="10" />
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -233,7 +233,7 @@ function AppContent() {
             <button
               onClick={handleNewGame}
               className="btn btn-ghost btn-sm"
-              style={{ minHeight: 40, minWidth: 40, padding: 'var(--space-1)' }}
+              style={{ minHeight: 40, minWidth: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Home"
             >
               <svg
@@ -245,6 +245,7 @@ function AppContent() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                style={{ flexShrink: 0 }}
               >
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
@@ -256,11 +257,11 @@ function AppContent() {
             <button
               onClick={handleSignOut}
               className="btn btn-ghost btn-sm"
-              style={{ minHeight: 40, minWidth: 40, padding: 'var(--space-1)' }}
+              style={{ minHeight: 40, minWidth: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Sign Out"
               title="Sign Out"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
