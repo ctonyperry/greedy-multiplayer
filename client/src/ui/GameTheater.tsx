@@ -361,8 +361,7 @@ export function GameTheater({
                 background: 'var(--color-surface-elevated)',
                 borderRadius: 'var(--radius-md)',
                 maxWidth: '100%',
-                overflowX: 'auto',
-                flexWrap: 'nowrap',
+                flexWrap: 'wrap',
               }}
             >
               <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', flexShrink: 0, whiteSpace: 'nowrap' }}>
