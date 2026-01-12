@@ -180,12 +180,13 @@ export function GameTheater({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        background: 'var(--color-surface)',
-        borderRadius: 'var(--radius-lg)',
+        background: 'rgba(30, 41, 59, 0.5)',
+        borderRadius: 'var(--radius-2xl)',
         border: '1px solid var(--color-border)',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        backdropFilter: 'blur(8px)',
       }}
     >
       {/* Header - Player name and instruction */}
@@ -194,6 +195,11 @@ export function GameTheater({
           padding: 'var(--space-4)',
           textAlign: 'center',
           borderBottom: '1px solid var(--color-border)',
+          background: isBust
+            ? 'rgba(239, 68, 68, 0.1)'
+            : isSuccess
+              ? 'rgba(34, 197, 94, 0.1)'
+              : 'transparent',
         }}
       >
         <h2
@@ -201,7 +207,7 @@ export function GameTheater({
             margin: 0,
             fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-bold)',
-            color: isBust ? 'var(--color-danger)' : isSuccess ? 'var(--color-success)' : 'var(--color-text)',
+            color: isBust ? '#ef4444' : isSuccess ? '#22c55e' : 'var(--color-text)',
           }}
         >
           {playerName}'s Turn
@@ -209,12 +215,13 @@ export function GameTheater({
             <span
               style={{
                 marginLeft: 'var(--space-2)',
-                fontSize: 'var(--font-size-sm)',
-                background: 'var(--color-accent)',
-                color: 'white',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-sm)',
+                fontSize: 'var(--font-size-xs)',
+                background: 'rgba(139, 92, 246, 0.2)',
+                color: '#8b5cf6',
+                padding: '2px 10px',
+                borderRadius: 'var(--radius-full)',
                 verticalAlign: 'middle',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
               }}
             >
               AI
@@ -224,8 +231,8 @@ export function GameTheater({
         <p
           style={{
             margin: 'var(--space-2) 0 0 0',
-            fontSize: 'var(--font-size-sm)',
-            color: isBust ? 'var(--color-danger)' : 'var(--color-text-secondary)',
+            fontSize: 'var(--font-size-base)',
+            color: isBust ? '#ef4444' : 'var(--color-text-secondary)',
           }}
         >
           {getInstruction()}
@@ -305,15 +312,16 @@ export function GameTheater({
                 justifyContent: 'center',
                 gap: 'clamp(4px, 1vw, var(--space-2))',
                 marginTop: 'var(--space-3)',
-                padding: 'var(--space-2)',
-                background: 'var(--color-surface-elevated)',
-                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3)',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                borderRadius: 'var(--radius-xl)',
                 maxWidth: '100%',
                 overflowX: 'auto',
                 flexWrap: 'nowrap',
               }}
             >
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: '#10b981', flexShrink: 0, whiteSpace: 'nowrap', fontWeight: 'var(--font-weight-medium)' }}>
                 Selected:
               </span>
               {selectedIndices.map((index) => (
@@ -334,14 +342,14 @@ export function GameTheater({
                 style={{
                   fontSize: 'var(--font-size-sm)',
                   fontWeight: 'var(--font-weight-bold)',
-                  color: 'var(--color-success)',
+                  color: '#22c55e',
                   flexShrink: 0,
                   whiteSpace: 'nowrap',
                 }}
               >
                 +{selectionScore}
                 {hasCarryover && !carryoverClaimed && carryoverPoints > 0 && (
-                  <span style={{ color: 'var(--color-warning)' }}>
+                  <span style={{ color: '#f59e0b' }}>
                     {' '}+{carryoverPoints.toLocaleString()} pot = {(selectionScore + carryoverPoints).toLocaleString()}
                   </span>
                 )}
@@ -363,9 +371,10 @@ export function GameTheater({
                 justifyContent: 'flex-start',
                 gap: 'clamp(2px, 0.5vw, var(--space-2))',
                 marginTop: 'var(--space-2)',
-                padding: 'var(--space-2)',
-                background: 'var(--color-surface-elevated)',
-                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-3)',
+                background: 'rgba(30, 41, 59, 0.7)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-xl)',
                 maxWidth: '100%',
                 flexWrap: 'wrap',
               }}
@@ -385,7 +394,7 @@ export function GameTheater({
                 style={{
                   fontSize: 'var(--font-size-sm)',
                   fontWeight: 'var(--font-weight-bold)',
-                  color: 'var(--color-primary)',
+                  color: '#10b981',
                   flexShrink: 0,
                   whiteSpace: 'nowrap',
                 }}
@@ -401,28 +410,28 @@ export function GameTheater({
       {!isOnBoard && isMyTurn && turnPhase !== TurnPhase.ENDED && (
         <div
           style={{
-            padding: 'var(--space-3) var(--space-4)',
-            background: 'var(--color-surface-elevated)',
-            borderTop: '1px solid var(--color-border)',
+            padding: 'var(--space-4)',
+            background: 'rgba(245, 158, 11, 0.1)',
+            borderTop: '1px solid rgba(245, 158, 11, 0.2)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
             <div
               style={{
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 borderRadius: 'var(--radius-full)',
                 background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 'var(--font-size-lg)',
+                fontSize: 'var(--font-size-xl)',
               }}
             >
               🎯
             </div>
             <div>
-              <div style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-warning)' }}>
+              <div style={{ fontWeight: 'var(--font-weight-semibold)', color: '#f59e0b', fontSize: 'var(--font-size-base)' }}>
                 Getting on the Board
               </div>
               <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
@@ -433,11 +442,12 @@ export function GameTheater({
           {/* Progress bar */}
           <div
             style={{
-              height: 8,
-              background: 'var(--color-border)',
+              height: 10,
+              background: 'rgba(30, 41, 59, 0.5)',
               borderRadius: 'var(--radius-full)',
               overflow: 'hidden',
-              marginBottom: 'var(--space-1)',
+              marginBottom: 'var(--space-2)',
+              border: '1px solid var(--color-border)',
             }}
           >
             <motion.div
@@ -446,25 +456,25 @@ export function GameTheater({
               style={{
                 height: '100%',
                 background: entryProgress >= 100
-                  ? 'var(--color-success)'
-                  : 'linear-gradient(90deg, var(--color-warning), var(--color-primary))',
+                  ? 'linear-gradient(90deg, #22c55e, #10b981)'
+                  : 'linear-gradient(90deg, #f59e0b, #10b981)',
                 borderRadius: 'var(--radius-full)',
               }}
             />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-            <span>{ownScore.toLocaleString()} / {entryThreshold.toLocaleString()}</span>
-            <span style={{ color: 'var(--color-warning)' }}>({pointsNeeded.toLocaleString()} more)</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-sm)' }}>
+            <span style={{ color: 'var(--color-text-secondary)' }}>{ownScore.toLocaleString()} / {entryThreshold.toLocaleString()}</span>
+            <span style={{ color: '#f59e0b', fontWeight: 'var(--font-weight-medium)' }}>{pointsNeeded.toLocaleString()} more to go!</span>
           </div>
         </div>
       )}
 
       {/* Action Buttons */}
       {isMyTurn && turnPhase !== TurnPhase.ENDED && (
-        <div style={{ padding: 'var(--space-3) var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
+        <div style={{ padding: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
           {/* Carryover choice buttons */}
           {turnPhase === TurnPhase.STEAL_REQUIRED && !currentRoll && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
               <motion.button
                 onClick={onRoll}
                 disabled={!canRoll}
@@ -472,11 +482,13 @@ export function GameTheater({
                 whileTap={{ scale: 0.98 }}
                 className="btn"
                 style={{
-                  padding: 'var(--space-3)',
+                  padding: 'var(--space-4)',
                   background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
                   color: 'white',
                   border: 'none',
                   fontWeight: 'var(--font-weight-bold)',
+                  borderRadius: 'var(--radius-xl)',
+                  boxShadow: '0 0 20px rgba(245, 158, 11, 0.3)',
                 }}
               >
                 🎲 Risk It!
@@ -488,9 +500,10 @@ export function GameTheater({
                 whileTap={{ scale: 0.98 }}
                 className="btn"
                 style={{
-                  padding: 'var(--space-3)',
-                  background: 'var(--color-surface)',
+                  padding: 'var(--space-4)',
+                  background: 'rgba(30, 41, 59, 0.5)',
                   border: '2px solid var(--color-border)',
+                  borderRadius: 'var(--radius-xl)',
                 }}
               >
                 🛡️ Play Safe
@@ -500,7 +513,7 @@ export function GameTheater({
 
           {/* Normal action buttons */}
           {(turnPhase !== TurnPhase.STEAL_REQUIRED || currentRoll) && (
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: canBank || canKeepAndBank ? '1fr 1fr' : '1fr', gap: 'var(--space-3)' }}>
               {/* Bank button */}
               {(canBank || canKeepAndBank) && (
                 <motion.button
@@ -510,12 +523,13 @@ export function GameTheater({
                   whileTap={{ scale: 0.98 }}
                   className="btn"
                   style={{
-                    flex: 1,
-                    padding: 'var(--space-3)',
-                    background: 'var(--color-success)',
+                    padding: 'var(--space-4)',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
                     color: 'white',
                     border: 'none',
                     fontWeight: 'var(--font-weight-bold)',
+                    borderRadius: 'var(--radius-xl)',
+                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
                   }}
                 >
                   💰 Bank {totalToBank.toLocaleString()}
@@ -530,15 +544,17 @@ export function GameTheater({
                 whileTap={canRoll ? { scale: 0.98 } : {}}
                 className="btn"
                 style={{
-                  flex: canBank || canKeepAndBank ? 1 : 'auto',
-                  width: canBank || canKeepAndBank ? undefined : '100%',
-                  padding: 'var(--space-3)',
+                  padding: 'var(--space-4)',
                   background: isHotDice
                     ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
-                    : 'var(--color-primary)',
+                    : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                   color: 'white',
                   border: 'none',
                   fontWeight: 'var(--font-weight-bold)',
+                  borderRadius: 'var(--radius-xl)',
+                  boxShadow: isHotDice
+                    ? '0 0 20px rgba(245, 158, 11, 0.4)'
+                    : '0 0 20px rgba(59, 130, 246, 0.3)',
                   opacity: canRoll ? 1 : 0.5,
                   cursor: canRoll ? 'pointer' : 'not-allowed',
                 }}

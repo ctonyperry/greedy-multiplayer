@@ -53,47 +53,54 @@
   --radius-2xl: 1.5rem;   /* 24px */
   --radius-full: 9999px;
 
-  /* Colors - Semantic */
-  --color-primary: #22c55e;
-  --color-primary-hover: #16a34a;
-  --color-primary-light: rgba(34, 197, 94, 0.15);
-  --color-primary-glow: rgba(34, 197, 94, 0.4);
+  /* Colors - Semantic (Figma emerald/blue palette) */
+  --color-primary: #10b981;           /* emerald-500 */
+  --color-primary-hover: #059669;     /* emerald-600 */
+  --color-primary-light: rgba(16, 185, 129, 0.15);
+  --color-primary-glow: rgba(16, 185, 129, 0.4);
 
-  --color-secondary: #3b82f6;
-  --color-secondary-hover: #2563eb;
+  --color-secondary: #3b82f6;         /* blue-500 */
+  --color-secondary-hover: #2563eb;   /* blue-600 */
   --color-secondary-light: rgba(59, 130, 246, 0.15);
   --color-secondary-glow: rgba(59, 130, 246, 0.4);
 
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #7c3aed;
+  --color-accent: #8b5cf6;            /* purple-500 */
+  --color-accent-hover: #7c3aed;      /* purple-600 */
   --color-accent-light: rgba(139, 92, 246, 0.15);
   --color-accent-glow: rgba(139, 92, 246, 0.4);
 
-  --color-warning: #f59e0b;
-  --color-warning-hover: #d97706;
+  --color-warning: #f59e0b;           /* amber-500 */
+  --color-warning-hover: #d97706;     /* amber-600 */
   --color-warning-light: rgba(245, 158, 11, 0.15);
 
-  --color-danger: #ef4444;
-  --color-danger-hover: #dc2626;
+  --color-danger: #ef4444;            /* red-500 */
+  --color-danger-hover: #dc2626;      /* red-600 */
   --color-danger-light: rgba(239, 68, 68, 0.15);
 
-  /* Colors - Surfaces */
-  --color-background: #1a1a2e;
-  --color-background-alt: #16213e;
-  --color-surface: rgba(255, 255, 255, 0.05);
-  --color-surface-hover: rgba(255, 255, 255, 0.08);
-  --color-surface-active: rgba(255, 255, 255, 0.12);
-  --color-surface-raised: rgba(255, 255, 255, 0.1);
+  --color-success: #22c55e;           /* green-500 */
+  --color-success-hover: #16a34a;     /* green-600 */
+  --color-success-light: rgba(34, 197, 94, 0.15);
+
+  /* Colors - Surfaces (Figma slate palette) */
+  --color-background: #0f172a;        /* slate-900 */
+  --color-background-alt: #1e3a5f;    /* blue-900 variant */
+  --color-surface: rgba(30, 41, 59, 0.5);           /* slate-800/50 */
+  --color-surface-hover: rgba(30, 41, 59, 0.7);     /* slate-800/70 */
+  --color-surface-active: rgba(30, 41, 59, 0.9);    /* slate-800/90 */
+  --color-surface-elevated: rgba(30, 41, 59, 0.5);  /* slate-800/50 */
+  --color-surface-raised: rgba(51, 65, 85, 0.5);    /* slate-700/50 */
 
   /* Colors - Text */
+  --color-text: #ffffff;
   --color-text-primary: #ffffff;
-  --color-text-secondary: rgba(255, 255, 255, 0.7);
-  --color-text-tertiary: rgba(255, 255, 255, 0.5);
-  --color-text-muted: rgba(255, 255, 255, 0.4);
+  --color-text-secondary: rgba(148, 163, 184, 1);   /* slate-400 */
+  --color-text-tertiary: rgba(100, 116, 139, 1);    /* slate-500 */
+  --color-text-muted: rgba(71, 85, 105, 1);         /* slate-600 */
 
-  /* Colors - Borders */
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-border-strong: rgba(255, 255, 255, 0.2);
+  /* Colors - Borders (Figma slate-700) */
+  --color-border: rgba(51, 65, 85, 1);              /* slate-700 */
+  --color-border-strong: rgba(71, 85, 105, 1);      /* slate-600 */
+  --color-border-light: rgba(51, 65, 85, 0.5);      /* slate-700/50 */
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -204,7 +211,8 @@ body {
   font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
   color: var(--color-text-primary);
-  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-alt) 100%);
+  /* Figma-style gradient: slate-900 -> blue-900 -> slate-900 */
+  background: linear-gradient(to bottom right, #0f172a, #1e3a5f, #0f172a);
   min-height: 100vh;
   min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
@@ -337,7 +345,7 @@ body {
 .pip.bottom-right { bottom: 10%; right: 10%; }
 
 /* ============================================
-   Button Styles
+   Button Styles (Figma-inspired)
    ============================================ */
 
 .btn {
@@ -354,18 +362,18 @@ body {
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none;
 }
 
 .btn:hover:not(:disabled) {
-  transform: scale(1.02);
+  transform: scale(1.03);
 }
 
 .btn:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .btn:disabled {
@@ -373,39 +381,78 @@ body {
   cursor: not-allowed;
 }
 
-/* Button Variants */
+/* Button Variants - Figma gradients */
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
-  color: var(--color-background);
-  box-shadow: var(--shadow-md), var(--shadow-glow-primary);
+  background: linear-gradient(135deg, #10b981, #059669); /* emerald-500 to emerald-600 */
+  color: white;
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857); /* emerald-600 to emerald-700 */
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-hover));
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-md), var(--shadow-glow-secondary);
+  background: linear-gradient(135deg, #3b82f6, #2563eb); /* blue-500 to blue-600 */
+  color: white;
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8); /* blue-600 to blue-700 */
 }
 
 .btn-accent {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-md), var(--shadow-glow-accent);
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed); /* purple-500 to purple-600 */
+  color: white;
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9); /* purple-600 to purple-700 */
 }
 
 .btn-warning {
-  background: linear-gradient(135deg, var(--color-warning), var(--color-warning-hover));
-  color: var(--color-background);
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, #f59e0b, #d97706); /* amber-500 to amber-600 */
+  color: white;
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d97706, #b45309); /* amber-600 to amber-700 */
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626); /* red-500 to red-600 */
+  color: white;
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c); /* red-600 to red-700 */
 }
 
 .btn-ghost {
-  background: var(--color-surface);
+  background: rgba(30, 41, 59, 0.5); /* slate-800/50 */
   color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
   box-shadow: none;
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: var(--color-surface-hover);
+  background: rgba(30, 41, 59, 0.7); /* slate-800/70 */
+  border-color: var(--color-border-strong);
+}
+
+/* White button (for Google sign-in style) */
+.btn-white {
+  background: white;
+  color: #111827; /* gray-900 */
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-white:hover:not(:disabled) {
+  background: #f9fafb; /* gray-50 */
 }
 
 /* Button Sizes */
@@ -447,29 +494,47 @@ select::-ms-expand {
 }
 
 /* ============================================
-   Card Styles
+   Card Styles (Figma-inspired)
    ============================================ */
 
 .card {
-  background: var(--color-surface);
+  background: rgba(30, 41, 59, 0.5); /* slate-800/50 */
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   padding: var(--space-4);
+  backdrop-filter: blur(8px);
 }
 
 .card-raised {
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-md);
+  background: rgba(30, 41, 59, 0.7); /* slate-800/70 */
+  box-shadow: var(--shadow-lg);
 }
 
 .card-highlight {
   border-color: var(--color-primary);
+  border-width: 2px;
   background: var(--color-primary-light);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
 .card-accent {
   border-color: var(--color-accent);
+  border-width: 2px;
   background: var(--color-accent-light);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+.card-secondary {
+  border-color: var(--color-secondary);
+  border-width: 2px;
+  background: var(--color-secondary-light);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.card-warning {
+  border-color: var(--color-warning);
+  border-width: 2px;
+  background: var(--color-warning-light);
 }
 
 /* ============================================
@@ -561,6 +626,52 @@ select::-ms-expand {
 .animate-spin { animation: spin 1s linear infinite; }
 .animate-pulse { animation: pulse 2s ease-in-out infinite; }
 .animate-celebrate { animation: celebrate 0.6s ease-in-out; }
+
+/* ============================================
+   Animated Background Blobs (Figma-style)
+   ============================================ */
+
+.bg-blobs-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.bg-blob-primary {
+  background: rgba(16, 185, 129, 0.15); /* emerald-500/15 */
+  animation: blob-pulse 8s ease-in-out infinite;
+}
+
+.bg-blob-secondary {
+  background: rgba(59, 130, 246, 0.15); /* blue-500/15 */
+  animation: blob-pulse 8s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+@keyframes blob-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1) translate(0, 0);
+  }
+  33% {
+    opacity: 0.6;
+    transform: scale(1.05) translate(2%, -2%);
+  }
+  66% {
+    opacity: 0.5;
+    transform: scale(0.98) translate(-1%, 1%);
+  }
+}
 
 /* ============================================
    Accessibility

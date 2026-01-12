@@ -406,10 +406,11 @@ export function MultiplayerGameBoard({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 'var(--space-2)',
-            padding: 'var(--space-2) var(--space-3)',
-            backgroundColor: 'var(--color-surface)',
-            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-3) var(--space-4)',
+            background: 'rgba(30, 41, 59, 0.5)',
+            borderRadius: 'var(--radius-xl)',
             border: '1px solid var(--color-border)',
+            backdropFilter: 'blur(8px)',
           }}
         >
           {isMobile ? (
@@ -421,7 +422,7 @@ export function MultiplayerGameBoard({
       )}
 
       {/* Floating menu button */}
-      <div style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)', zIndex: 50 }}>
+      <div style={{ position: 'absolute', top: 'var(--space-3)', right: 'var(--space-3)', zIndex: 50 }}>
         <button
           onClick={() => setShowMenu(!showMenu)}
           style={{
@@ -454,14 +455,15 @@ export function MultiplayerGameBoard({
                   position: 'absolute',
                   right: 0,
                   top: '100%',
-                  marginTop: 'var(--space-1)',
-                  backgroundColor: '#2a2a4a',
-                  borderRadius: 'var(--radius-md)',
+                  marginTop: 'var(--space-2)',
+                  background: 'rgba(30, 41, 59, 0.95)',
+                  borderRadius: 'var(--radius-xl)',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: 160,
+                  border: '1px solid var(--color-border)',
+                  minWidth: 180,
                   zIndex: 100,
                   overflow: 'hidden',
+                  backdropFilter: 'blur(12px)',
                 }}
               >
                 <button
@@ -476,7 +478,7 @@ export function MultiplayerGameBoard({
                     color: 'var(--color-text)',
                     fontSize: 'var(--font-size-sm)',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   Leave Game
@@ -494,10 +496,10 @@ export function MultiplayerGameBoard({
                       border: 'none',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      color: 'var(--color-danger)',
+                      color: '#ef4444',
                       fontSize: 'var(--font-size-sm)',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     Forfeit Game
@@ -519,10 +521,11 @@ export function MultiplayerGameBoard({
               position: 'fixed',
               inset: 0,
               zIndex: 1100,
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backgroundColor: 'rgba(15, 23, 42, 0.9)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              backdropFilter: 'blur(4px)',
             }}
             onClick={() => !isForfeiting && setShowForfeitConfirm(false)}
           >
@@ -532,27 +535,45 @@ export function MultiplayerGameBoard({
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
               style={{
-                backgroundColor: 'var(--color-surface-elevated)',
-                borderRadius: 'var(--radius-lg)',
+                background: 'rgba(30, 41, 59, 0.95)',
+                borderRadius: 'var(--radius-2xl)',
                 padding: 'var(--space-6)',
-                maxWidth: 320,
+                maxWidth: 360,
                 textAlign: 'center',
+                border: '1px solid var(--color-border)',
+                backdropFilter: 'blur(12px)',
               }}
             >
-              <h3 style={{ marginBottom: 'var(--space-3)', color: 'var(--color-danger)' }}>
+              <div style={{
+                width: 56,
+                height: 56,
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(239, 68, 68, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--space-4) auto',
+                fontSize: 'var(--font-size-2xl)',
+              }}>
+                ⚠️
+              </div>
+              <h3 style={{ marginBottom: 'var(--space-3)', color: '#ef4444', fontSize: 'var(--font-size-xl)' }}>
                 Forfeit Game?
               </h3>
-              <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-secondary)' }}>
+              <p style={{ marginBottom: 'var(--space-5)', color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
                 This will end the game and your opponent will win. This action cannot be undone.
               </p>
-              <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
                 <button
                   onClick={() => setShowForfeitConfirm(false)}
                   className="btn"
                   disabled={isForfeiting}
                   style={{
-                    backgroundColor: 'var(--color-surface)',
+                    background: 'rgba(30, 41, 59, 0.5)',
+                    border: '2px solid var(--color-border)',
                     color: 'var(--color-text)',
+                    borderRadius: 'var(--radius-xl)',
+                    padding: 'var(--space-3)',
                   }}
                 >
                   Cancel
@@ -562,8 +583,12 @@ export function MultiplayerGameBoard({
                   className="btn"
                   disabled={isForfeiting}
                   style={{
-                    backgroundColor: 'var(--color-danger)',
+                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    border: 'none',
                     color: 'white',
+                    borderRadius: 'var(--radius-xl)',
+                    padding: 'var(--space-3)',
+                    boxShadow: '0 0 20px rgba(239, 68, 68, 0.3)',
                   }}
                 >
                   {isForfeiting ? 'Forfeiting...' : 'Forfeit'}
@@ -637,21 +662,44 @@ export function MultiplayerGameBoard({
               position: 'fixed',
               inset: 0,
               zIndex: 900,
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexDirection: 'column',
               gap: 'var(--space-4)',
+              backdropFilter: 'blur(8px)',
             }}
           >
+            <div style={{
+              width: 72,
+              height: 72,
+              borderRadius: 'var(--radius-full)',
+              background: 'rgba(245, 158, 11, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 'var(--space-2)',
+            }}>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  border: '3px solid #f59e0b',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                }}
+              />
+            </div>
             <motion.div
               animate={{ opacity: [1, 0.5, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
               style={{
                 fontSize: 'var(--font-size-2xl)',
                 fontWeight: 'var(--font-weight-bold)',
-                color: 'var(--color-warning)',
+                color: '#f59e0b',
               }}
             >
               Connection Lost
@@ -663,8 +711,17 @@ export function MultiplayerGameBoard({
             </p>
             <button
               onClick={() => reconnect()}
-              className="btn btn-primary"
-              style={{ marginTop: 'var(--space-2)' }}
+              style={{
+                marginTop: 'var(--space-2)',
+                padding: 'var(--space-3) var(--space-6)',
+                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                border: 'none',
+                borderRadius: 'var(--radius-xl)',
+                color: 'white',
+                fontWeight: 'var(--font-weight-semibold)',
+                cursor: 'pointer',
+                boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
+              }}
             >
               Reconnect Now
             </button>
@@ -683,21 +740,44 @@ export function MultiplayerGameBoard({
               position: 'fixed',
               inset: 0,
               zIndex: 850,
-              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexDirection: 'column',
               gap: 'var(--space-4)',
+              backdropFilter: 'blur(8px)',
             }}
           >
+            <div style={{
+              width: 72,
+              height: 72,
+              borderRadius: 'var(--radius-full)',
+              background: 'rgba(139, 92, 246, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 'var(--space-2)',
+            }}>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  border: '3px solid #8b5cf6',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                }}
+              />
+            </div>
             <motion.div
               animate={{ opacity: [1, 0.6, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
               style={{
                 fontSize: 'var(--font-size-3xl)',
                 fontWeight: 'var(--font-weight-bold)',
-                color: 'var(--color-warning)',
+                color: '#8b5cf6',
               }}
             >
               Game Paused
@@ -705,18 +785,6 @@ export function MultiplayerGameBoard({
             <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', maxWidth: 300 }}>
               All players disconnected. The game will resume when someone reconnects.
             </p>
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              style={{
-                width: 32,
-                height: 32,
-                border: '3px solid var(--color-warning)',
-                borderTopColor: 'transparent',
-                borderRadius: '50%',
-                marginTop: 'var(--space-2)',
-              }}
-            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -732,47 +800,51 @@ export function MultiplayerGameBoard({
               position: 'fixed',
               inset: 0,
               zIndex: 700,
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               pointerEvents: 'none',
+              backdropFilter: 'blur(4px)',
             }}
           >
             <motion.div
               animate={{
-                scale: [1, 1.1, 1],
-                opacity: [1, 0.8, 1],
+                scale: [1, 1.05, 1],
+                opacity: [1, 0.9, 1],
               }}
               transition={{ duration: 0.5, repeat: Infinity }}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 'var(--space-2)',
-                padding: 'var(--space-6)',
-                backgroundColor: 'rgba(239, 68, 68, 0.95)',
-                borderRadius: 'var(--radius-xl)',
-                boxShadow: '0 0 40px rgba(239, 68, 68, 0.5)',
+                gap: 'var(--space-3)',
+                padding: 'var(--space-8)',
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                borderRadius: 'var(--radius-2xl)',
+                boxShadow: '0 0 60px rgba(239, 68, 68, 0.5)',
+                border: '2px solid rgba(255, 255, 255, 0.2)',
               }}
             >
               <span
                 style={{
-                  fontSize: 'var(--font-size-5xl)',
+                  fontSize: '64px',
                   fontWeight: 'var(--font-weight-bold)',
                   color: 'white',
                   fontFamily: 'monospace',
+                  lineHeight: 1,
+                  textShadow: '0 2px 10px rgba(0,0,0,0.3)',
                 }}
               >
                 {warningCountdown}
               </span>
               <span
                 style={{
-                  fontSize: 'var(--font-size-lg)',
-                  fontWeight: 'var(--font-weight-medium)',
+                  fontSize: 'var(--font-size-xl)',
+                  fontWeight: 'var(--font-weight-bold)',
                   color: 'white',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
+                  letterSpacing: '0.15em',
                 }}
               >
                 Make a move!
@@ -780,7 +852,7 @@ export function MultiplayerGameBoard({
               <span
                 style={{
                   fontSize: 'var(--font-size-sm)',
-                  color: 'rgba(255, 255, 255, 0.8)',
+                  color: 'rgba(255, 255, 255, 0.7)',
                 }}
               >
                 or AI takes over

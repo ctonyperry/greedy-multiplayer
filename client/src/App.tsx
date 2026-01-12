@@ -165,8 +165,31 @@ function AppContent() {
         minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Animated background blobs */}
+      <div className="bg-blobs-container">
+        <div
+          className="bg-blob bg-blob-primary"
+          style={{
+            width: 'clamp(256px, 40vw, 400px)',
+            height: 'clamp(256px, 40vw, 400px)',
+            top: '15%',
+            left: '10%',
+          }}
+        />
+        <div
+          className="bg-blob bg-blob-secondary"
+          style={{
+            width: 'clamp(256px, 40vw, 400px)',
+            height: 'clamp(256px, 40vw, 400px)',
+            bottom: '15%',
+            right: '10%',
+          }}
+        />
+      </div>
       {/* Header */}
       <header
         style={{
@@ -175,17 +198,20 @@ function AppContent() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: 'rgba(0, 0, 0, 0.2)',
+          background: 'rgba(15, 23, 42, 0.8)', /* slate-900/80 */
+          backdropFilter: 'blur(8px)',
           minHeight: 'var(--header-height)',
+          position: 'relative',
+          zIndex: 10,
         }}
       >
         <h1
           onClick={() => isAuthenticated ? setScreen('home') : setScreen('start')}
           style={{
             margin: 0,
-            fontSize: 'var(--font-size-lg)',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-bold)',
-            background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+            background: 'linear-gradient(to right, #34d399, #10b981)', /* emerald-400 to emerald-500 */
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -222,10 +248,9 @@ function AppContent() {
             style={{ minHeight: 40, minWidth: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             aria-label={t('howToPlay')}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M6 9a6 6 0 0 1 12 0c0 4-6 5-6 9" />
+              <circle cx="12" cy="21" r="1" fill="currentColor" />
             </svg>
           </button>
 
@@ -272,7 +297,7 @@ function AppContent() {
       </header>
 
       {/* Main content */}
-      <main style={{ flex: 1, overflow: 'auto' }}>
+      <main style={{ flex: 1, overflow: 'auto', position: 'relative', zIndex: 1 }}>
         <AnimatePresence mode="wait">
           {/* Start Screen - Authentication options */}
           {screen === 'start' && (
@@ -311,11 +336,19 @@ function AppContent() {
                   padding: 'var(--space-6) var(--space-4)',
                 }}
               >
+                {/* Welcome header - Figma style */}
                 <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
-                  <h2 style={{ marginBottom: 'var(--space-2)' }}>
+                  <h2 style={{
+                    fontSize: 'var(--font-size-2xl)',
+                    fontWeight: 'var(--font-weight-bold)',
+                    marginBottom: 'var(--space-2)',
+                  }}>
                     Welcome, {user?.name || 'Player'}!
                   </h2>
-                  <p style={{ color: 'var(--color-text-secondary)' }}>
+                  <p style={{
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 'var(--font-size-lg)',
+                  }}>
                     What would you like to do?
                   </p>
                 </div>
@@ -324,11 +357,11 @@ function AppContent() {
                 {activeGames.length > 0 && (
                   <div
                     style={{
-                      marginBottom: 'var(--space-4)',
-                      padding: 'var(--space-3)',
-                      backgroundColor: 'var(--color-surface-elevated)',
-                      borderRadius: 'var(--radius-lg)',
-                      border: '1px solid var(--color-primary)',
+                      marginBottom: 'var(--space-5)',
+                      padding: 'var(--space-4)',
+                      backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                      borderRadius: 'var(--radius-2xl)',
+                      border: '2px solid rgba(16, 185, 129, 0.3)',
                     }}
                   >
                     <h3
@@ -338,6 +371,7 @@ function AppContent() {
                         marginBottom: 'var(--space-3)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
+                        fontWeight: 'var(--font-weight-semibold)',
                       }}
                     >
                       Resume Game
@@ -353,7 +387,7 @@ function AppContent() {
                           }}
                         >
                           <button
-                            className="btn btn-secondary"
+                            className="btn"
                             onClick={() => {
                               const status = activeGame.game?.status || 'waiting';
                               handleResumeGame(activeGame.code, status as 'waiting' | 'playing');
@@ -363,7 +397,10 @@ function AppContent() {
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
-                              padding: 'var(--space-3)',
+                              padding: 'var(--space-3) var(--space-4)',
+                              background: 'rgba(30, 41, 59, 0.7)',
+                              border: '1px solid var(--color-border)',
+                              borderRadius: 'var(--radius-xl)',
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
@@ -371,6 +408,7 @@ function AppContent() {
                                 style={{
                                   fontFamily: 'monospace',
                                   fontWeight: 'var(--font-weight-bold)',
+                                  color: 'var(--color-primary)',
                                 }}
                               >
                                 {activeGame.code}
@@ -382,18 +420,19 @@ function AppContent() {
                                     color: activeGame.game.status === 'playing'
                                       ? 'var(--color-primary)'
                                       : 'var(--color-text-secondary)',
-                                    padding: '2px 6px',
+                                    padding: '2px 8px',
                                     backgroundColor: activeGame.game.status === 'playing'
                                       ? 'var(--color-primary-light)'
-                                      : 'var(--color-surface-hover)',
-                                    borderRadius: 'var(--radius-sm)',
+                                      : 'rgba(30, 41, 59, 0.5)',
+                                    borderRadius: 'var(--radius-full)',
+                                    fontWeight: 'var(--font-weight-medium)',
                                   }}
                                 >
                                   {activeGame.game.status === 'playing' ? 'In Progress' : 'Waiting'}
                                 </span>
                               )}
                             </div>
-                            <span style={{ fontSize: 'var(--font-size-sm)' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                               {activeGame.game
                                 ? `${activeGame.game.players.length} player${activeGame.game.players.length !== 1 ? 's' : ''}`
                                 : 'Resume'
@@ -410,7 +449,10 @@ function AppContent() {
                             }}
                             title="Leave game"
                           >
-                            ✕
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
                           </button>
                         </div>
                       ))}
@@ -418,6 +460,7 @@ function AppContent() {
                   </div>
                 )}
 
+                {/* Main action buttons - Figma style with icons */}
                 <div
                   style={{
                     display: 'flex',
@@ -429,20 +472,40 @@ function AppContent() {
                     className="btn btn-primary"
                     onClick={handleCreateGame}
                     style={{
-                      padding: 'var(--space-4)',
-                      fontSize: 'var(--font-size-lg)',
+                      padding: 'var(--space-5) var(--space-4)',
+                      fontSize: 'var(--font-size-xl)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 'var(--space-3)',
+                      borderRadius: 'var(--radius-2xl)',
                     }}
                   >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
                     Create Game
                   </button>
                   <button
                     className="btn btn-secondary"
                     onClick={handleJoinGame}
                     style={{
-                      padding: 'var(--space-4)',
-                      fontSize: 'var(--font-size-lg)',
+                      padding: 'var(--space-5) var(--space-4)',
+                      fontSize: 'var(--font-size-xl)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 'var(--space-3)',
+                      borderRadius: 'var(--radius-2xl)',
                     }}
                   >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
                     Join Game
                   </button>
                 </div>

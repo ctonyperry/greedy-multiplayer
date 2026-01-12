@@ -278,12 +278,13 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
       {/* ============================================ */}
       <section style={{
         background: phase === 'inviting'
-          ? 'linear-gradient(135deg, var(--color-primary-light), var(--color-surface-elevated))'
-          : 'var(--color-surface-elevated)',
-        borderRadius: 'var(--radius-xl)',
+          ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(30, 41, 59, 0.5))'
+          : 'rgba(30, 41, 59, 0.5)',
+        borderRadius: 'var(--radius-2xl)',
         padding: 'var(--space-5)',
         textAlign: 'center',
         transition: 'background 0.3s ease',
+        border: '1px solid var(--color-border)',
       }}>
         {/* Phase indicator for inviting */}
         {phase === 'inviting' && (
@@ -345,9 +346,9 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
           <button
             onClick={copyCode}
             style={{
-              background: codeCopied ? 'var(--color-success)' : 'var(--color-surface)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
+              background: codeCopied ? '#22c55e' : 'rgba(30, 41, 59, 0.7)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-lg)',
               padding: 'var(--space-2)',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -472,11 +473,11 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: 'var(--space-3) var(--space-4)',
-                backgroundColor: 'var(--color-surface-elevated)',
-                borderRadius: 'var(--radius-lg)',
+                backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                borderRadius: 'var(--radius-xl)',
                 border: player.id === game.hostId
-                  ? '2px solid var(--color-primary-light)'
-                  : '2px solid transparent',
+                  ? '2px solid rgba(16, 185, 129, 0.5)'
+                  : '1px solid var(--color-border)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
@@ -485,13 +486,13 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
                   width: 40,
                   height: 40,
                   borderRadius: 'var(--radius-full)',
-                  backgroundColor: player.isAI ? 'var(--color-accent-light)' : 'var(--color-secondary-light)',
+                  backgroundColor: player.isAI ? 'rgba(139, 92, 246, 0.2)' : 'rgba(59, 130, 246, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 'var(--font-size-sm)',
                   fontWeight: 'var(--font-weight-bold)',
-                  color: player.isAI ? 'var(--color-accent)' : 'var(--color-secondary)',
+                  color: player.isAI ? '#8b5cf6' : '#3b82f6',
                 }}>
                   {player.isAI ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -523,10 +524,11 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
                       <span style={{
                         fontSize: 'var(--font-size-xs)',
                         fontWeight: 'var(--font-weight-semibold)',
-                        color: 'var(--color-primary)',
-                        backgroundColor: 'var(--color-primary-light)',
-                        padding: '2px 8px',
+                        color: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        padding: '2px 10px',
                         borderRadius: 'var(--radius-full)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
                       }}>
                         HOST
                       </span>
@@ -547,10 +549,11 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
                       <span style={{
                         fontSize: 'var(--font-size-xs)',
                         fontWeight: 'var(--font-weight-medium)',
-                        color: 'var(--color-accent)',
-                        backgroundColor: 'var(--color-accent-light)',
-                        padding: '2px 8px',
+                        color: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                        padding: '2px 10px',
                         borderRadius: 'var(--radius-full)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
                       }}>
                         AI
                       </span>
@@ -624,19 +627,19 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
                     width: '100%',
                     padding: 'var(--space-3)',
                     backgroundColor: 'transparent',
-                    border: '2px dashed var(--color-border)',
-                    borderRadius: 'var(--radius-lg)',
+                    border: '2px dashed rgba(139, 92, 246, 0.4)',
+                    borderRadius: 'var(--radius-xl)',
                     color: 'var(--color-text-secondary)',
                     cursor: 'pointer',
                     fontSize: 'var(--font-size-sm)',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--color-primary)';
-                    e.currentTarget.style.color = 'var(--color-primary)';
+                    e.currentTarget.style.borderColor = '#8b5cf6';
+                    e.currentTarget.style.color = '#8b5cf6';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--color-border)';
+                    e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
                     e.currentTarget.style.color = 'var(--color-text-secondary)';
                   }}
                 >
@@ -927,8 +930,9 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
       {/* ============================================ */}
       <section style={{
         padding: 'var(--space-4)',
-        backgroundColor: 'var(--color-surface-elevated)',
-        borderRadius: 'var(--radius-lg)',
+        backgroundColor: 'rgba(30, 41, 59, 0.5)',
+        borderRadius: 'var(--radius-xl)',
+        border: '1px solid var(--color-border)',
       }}>
         <h4 style={{
           fontSize: 'var(--font-size-sm)',
@@ -1004,16 +1008,19 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
               transition={{ duration: 2, repeat: Infinity }}
               style={{
                 width: '100%',
-                padding: 'var(--space-4)',
-                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--space-5)',
+                borderRadius: 'var(--radius-2xl)',
                 border: 'none',
-                backgroundColor: canStart ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
+                background: canStart
+                  ? 'linear-gradient(135deg, #10b981, #059669)'
+                  : 'rgba(30, 41, 59, 0.5)',
                 color: canStart ? 'white' : 'var(--color-text-secondary)',
-                fontSize: 'var(--font-size-lg)',
+                fontSize: 'var(--font-size-xl)',
                 fontWeight: 'var(--font-weight-semibold)',
                 cursor: canStart ? 'pointer' : 'default',
                 transition: 'all 0.2s ease',
                 marginBottom: 'var(--space-3)',
+                boxShadow: canStart ? '0 0 30px rgba(16, 185, 129, 0.3)' : 'none',
               }}
             >
               {isStarting ? (

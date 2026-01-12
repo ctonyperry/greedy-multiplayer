@@ -35,10 +35,11 @@ export function PlayersPanel({
   return (
     <div
       style={{
-        backgroundColor: 'var(--color-surface)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--space-3)',
+        background: 'rgba(30, 41, 59, 0.5)',
+        borderRadius: 'var(--radius-2xl)',
+        padding: 'var(--space-4)',
         border: '1px solid var(--color-border)',
+        backdropFilter: 'blur(8px)',
       }}
     >
       {/* Header */}
@@ -47,14 +48,24 @@ export function PlayersPanel({
           display: 'flex',
           alignItems: 'center',
           gap: 'var(--space-2)',
-          marginBottom: 'var(--space-3)',
+          marginBottom: 'var(--space-4)',
         }}
       >
-        <span style={{ fontSize: 'var(--font-size-md)' }}>👑</span>
+        <div style={{
+          width: 32,
+          height: 32,
+          borderRadius: 'var(--radius-full)',
+          background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <span style={{ fontSize: 'var(--font-size-sm)' }}>👑</span>
+        </div>
         <h3
           style={{
             margin: 0,
-            fontSize: 'var(--font-size-sm)',
+            fontSize: 'var(--font-size-base)',
             fontWeight: 'var(--font-weight-semibold)',
             color: 'var(--color-text)',
           }}
@@ -76,13 +87,14 @@ export function PlayersPanel({
               initial={false}
               animate={{
                 backgroundColor: isCurrentTurn
-                  ? 'var(--color-surface-elevated)'
-                  : 'transparent',
+                  ? 'rgba(16, 185, 129, 0.1)'
+                  : 'rgba(30, 41, 59, 0.3)',
               }}
               style={{
-                padding: 'var(--space-2)',
-                borderRadius: 'var(--radius-md)',
-                border: isCurrentTurn ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                padding: 'var(--space-3)',
+                borderRadius: 'var(--radius-xl)',
+                border: isCurrentTurn ? '2px solid #10b981' : '1px solid var(--color-border)',
+                boxShadow: isCurrentTurn ? '0 0 15px rgba(16, 185, 129, 0.15)' : 'none',
               }}
             >
               {/* Top row: Avatar, Name, Score */}
@@ -96,10 +108,12 @@ export function PlayersPanel({
                 {/* Avatar */}
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 36,
+                    height: 36,
                     borderRadius: 'var(--radius-full)',
-                    backgroundColor: player.isAI ? 'var(--color-accent)' : 'var(--color-primary)',
+                    background: player.isAI
+                      ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)'
+                      : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -117,11 +131,11 @@ export function PlayersPanel({
                         position: 'absolute',
                         bottom: -2,
                         right: -2,
-                        width: 10,
-                        height: 10,
+                        width: 12,
+                        height: 12,
                         borderRadius: 'var(--radius-full)',
-                        backgroundColor: 'var(--color-warning)',
-                        border: '2px solid var(--color-surface)',
+                        backgroundColor: '#f59e0b',
+                        border: '2px solid rgba(30, 41, 59, 0.9)',
                       }}
                     />
                   )}
@@ -154,12 +168,12 @@ export function PlayersPanel({
                     style={{
                       fontSize: 'var(--font-size-md)',
                       fontWeight: 'var(--font-weight-bold)',
-                      color: isLeading ? 'var(--color-primary)' : 'var(--color-text)',
+                      color: isLeading ? '#10b981' : 'var(--color-text)',
                     }}
                   >
                     {player.score.toLocaleString()}
                   </span>
-                  {isLeading && <span style={{ marginLeft: 2 }}>👑</span>}
+                  {isLeading && <span style={{ marginLeft: 4 }}>👑</span>}
                 </div>
               </div>
 
@@ -168,19 +182,19 @@ export function PlayersPanel({
                 style={{
                   display: 'flex',
                   gap: 'var(--space-1)',
-                  marginTop: 'var(--space-1)',
-                  marginLeft: 40, // Align with name (avatar width + gap)
+                  marginTop: 'var(--space-2)',
+                  marginLeft: 44, // Align with name (avatar width + gap)
                 }}
               >
                 {isCurrentTurn && (
                   <span
                     style={{
                       fontSize: '10px',
-                      fontWeight: 'var(--font-weight-medium)',
+                      fontWeight: 'var(--font-weight-semibold)',
                       color: 'white',
-                      backgroundColor: 'var(--color-success)',
-                      padding: '1px 6px',
-                      borderRadius: 'var(--radius-sm)',
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-full)',
                     }}
                   >
                     Turn
@@ -191,10 +205,11 @@ export function PlayersPanel({
                     style={{
                       fontSize: '10px',
                       color: 'var(--color-text-secondary)',
-                      backgroundColor: 'var(--color-surface-hover)',
-                      padding: '1px 6px',
-                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-full)',
                       whiteSpace: 'nowrap',
+                      border: '1px solid var(--color-border)',
                     }}
                   >
                     Not on board
@@ -204,11 +219,12 @@ export function PlayersPanel({
                   <span
                     style={{
                       fontSize: '10px',
-                      color: 'var(--color-warning)',
-                      backgroundColor: 'var(--color-warning-light)',
-                      padding: '1px 6px',
-                      borderRadius: 'var(--radius-sm)',
+                      color: '#f59e0b',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-full)',
                       whiteSpace: 'nowrap',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
                     }}
                   >
                     Final round
@@ -223,8 +239,8 @@ export function PlayersPanel({
       {/* Footer */}
       <div
         style={{
-          marginTop: 'var(--space-3)',
-          paddingTop: 'var(--space-2)',
+          marginTop: 'var(--space-4)',
+          paddingTop: 'var(--space-3)',
           borderTop: '1px solid var(--color-border)',
           textAlign: 'center',
           fontSize: 'var(--font-size-xs)',
@@ -233,7 +249,13 @@ export function PlayersPanel({
       >
         {players.length} player{players.length !== 1 ? 's' : ''} in game
         {isFinalRound && (
-          <span style={{ color: 'var(--color-warning)', marginLeft: 'var(--space-2)' }}>
+          <span
+            style={{
+              color: '#f59e0b',
+              marginLeft: 'var(--space-2)',
+              fontWeight: 'var(--font-weight-medium)',
+            }}
+          >
             • Final Round
           </span>
         )}
