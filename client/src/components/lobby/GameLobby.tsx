@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../../services/api.js';
 import { useSocket, useSocketEvent } from '../../contexts/SocketContext.js';
 import { useAuth } from '../../contexts/AuthContext.js';
+import { generateName } from '../../utils/nameGenerator.js';
 import type { Game, Player } from '../../types/index.js';
 
 interface GameLobbyProps {
@@ -611,7 +612,10 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  onClick={() => setShowAddAI(true)}
+                  onClick={() => {
+                    setAiName(generateName());
+                    setShowAddAI(true);
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
