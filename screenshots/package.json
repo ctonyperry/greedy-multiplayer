@@ -1,0 +1,19 @@
+{
+  "name": "greedy-screenshots",
+  "version": "1.0.0",
+  "description": "Playwright screenshot capture for UX analysis",
+  "main": "capture-flows.js",
+  "scripts": {
+    "capture": "node capture-flows.js",
+    "capture:local": "BASE_URL=http://localhost:5173 node capture-flows.js",
+    "capture:prod": "BASE_URL=https://getgreedy.io node capture-flows.js"
+  },
+  "keywords": ["playwright", "screenshots", "ux"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@playwright/test": "^1.57.0",
+    "playwright": "^1.57.0"
+  }
+}
