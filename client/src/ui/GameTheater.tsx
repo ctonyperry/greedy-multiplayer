@@ -339,6 +339,11 @@ export function GameTheater({
                 }}
               >
                 +{selectionScore}
+                {hasCarryover && !carryoverClaimed && carryoverPoints > 0 && (
+                  <span style={{ color: 'var(--color-warning)' }}>
+                    {' '}+{carryoverPoints.toLocaleString()} pot = {(selectionScore + carryoverPoints).toLocaleString()}
+                  </span>
+                )}
               </span>
             </motion.div>
           )}
