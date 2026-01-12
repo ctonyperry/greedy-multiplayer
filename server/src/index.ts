@@ -29,12 +29,15 @@ cosmosService.initialize().catch((err) => {
 const app = express();
 const httpServer = createServer(app);
 
-// Allowed origins for CORS (support multiple dev ports)
+// Allowed origins for CORS (support multiple dev ports and production domains)
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:3000',
+  'https://getgreedy.io',
+  'https://www.getgreedy.io',
+  'https://jolly-moss-0adeb2b10.1.azurestaticapps.net',
   process.env.CLIENT_URL,
 ].filter(Boolean) as string[];
 
