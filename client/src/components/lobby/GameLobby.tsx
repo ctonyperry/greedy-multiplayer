@@ -270,7 +270,7 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
       margin: '0 auto',
       display: 'flex',
       flexDirection: 'column',
-      gap: 'var(--space-6)',
+      gap: 'var(--space-4)',
     }}>
 
       {/* ============================================ */}
@@ -280,8 +280,8 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
         background: phase === 'inviting'
           ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(30, 41, 59, 0.5))'
           : 'rgba(30, 41, 59, 0.5)',
-        borderRadius: 'var(--radius-2xl)',
-        padding: 'var(--space-5)',
+        borderRadius: 'var(--radius-xl)',
+        padding: 'var(--space-4)',
         textAlign: 'center',
         transition: 'background 0.3s ease',
         border: '1px solid var(--color-border)',
@@ -298,7 +298,7 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
             borderRadius: 'var(--radius-full)',
             fontSize: 'var(--font-size-xs)',
             fontWeight: 'var(--font-weight-medium)',
-            marginBottom: 'var(--space-4)',
+            marginBottom: 'var(--space-3)',
           }}>
             <motion.span
               animate={{ opacity: [1, 0.5, 1] }}
@@ -315,29 +315,27 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
         )}
 
         <p style={{
-          fontSize: 'var(--font-size-sm)',
+          fontSize: 'var(--font-size-xs)',
           color: 'var(--color-text-secondary)',
-          marginBottom: 'var(--space-2)',
+          marginBottom: 'var(--space-1)',
         }}>
           Share this code to invite players
         </p>
 
-        {/* Large game code */}
+        {/* Game code row with copy buttons */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 'var(--space-2)',
-          marginBottom: 'var(--space-4)',
-          maxWidth: '100%',
-          overflow: 'hidden',
+          gap: 'var(--space-3)',
+          marginBottom: 'var(--space-3)',
         }}>
           <motion.span
             style={{
-              fontSize: 'clamp(1.5rem, 10vw, 3rem)',
+              fontSize: 'clamp(1.75rem, 8vw, 2.5rem)',
               fontFamily: 'monospace',
               fontWeight: 'var(--font-weight-bold)',
-              letterSpacing: '0.1em',
+              letterSpacing: '0.08em',
               color: 'var(--color-primary)',
             }}
           >
@@ -353,6 +351,11 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               color: codeCopied ? 'white' : 'var(--color-text)',
+              minWidth: 44,
+              minHeight: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             title="Copy code"
           >
@@ -377,7 +380,7 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 'var(--space-2)',
-            padding: 'var(--space-3) var(--space-5)',
+            padding: 'var(--space-3) var(--space-4)',
             backgroundColor: linkCopied ? 'var(--color-success)' : 'var(--color-primary)',
             color: 'white',
             border: 'none',
@@ -387,7 +390,7 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
             cursor: 'pointer',
             transition: 'all 0.2s ease',
             width: '100%',
-            maxWidth: '280px',
+            minHeight: 48,
           }}
         >
           {linkCopied ? (
@@ -607,7 +610,7 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
 
         {/* Add AI Player button (host only, not full) */}
         {isHost && !isFull && (
-          <div style={{ marginTop: 'var(--space-3)' }}>
+          <div style={{ marginTop: 'var(--space-2)' }}>
             <AnimatePresence mode="wait">
               {!showAddAI ? (
                 <motion.button
@@ -626,27 +629,29 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
                     gap: 'var(--space-2)',
                     width: '100%',
                     padding: 'var(--space-3)',
-                    backgroundColor: 'transparent',
-                    border: '2px dashed rgba(139, 92, 246, 0.4)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                    border: '2px solid rgba(139, 92, 246, 0.4)',
                     borderRadius: 'var(--radius-xl)',
-                    color: 'var(--color-text-secondary)',
+                    color: '#8b5cf6',
                     cursor: 'pointer',
                     fontSize: 'var(--font-size-sm)',
+                    fontWeight: 'var(--font-weight-medium)',
                     transition: 'all 0.2s ease',
+                    minHeight: 48,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#8b5cf6';
-                    e.currentTarget.style.color = '#8b5cf6';
+                    e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.25)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.4)';
-                    e.currentTarget.style.color = 'var(--color-text-secondary)';
+                    e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.15)';
                   }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="16" />
-                    <line x1="8" y1="12" x2="16" y2="12" />
+                    <rect x="3" y="11" width="18" height="10" rx="2" />
+                    <circle cx="12" cy="5" r="3" />
+                    <path d="M12 8v3" />
                   </svg>
                   Add AI Player
                 </motion.button>
@@ -926,43 +931,31 @@ export function GameLobby({ gameCode, onGameStart, onLeave }: GameLobbyProps) {
       )}
 
       {/* ============================================ */}
-      {/* SECTION 4: GAME SETTINGS (Read-only) */}
+      {/* SECTION 4: GAME SETTINGS (Compact inline) */}
       {/* ============================================ */}
       <section style={{
-        padding: 'var(--space-4)',
-        backgroundColor: 'rgba(30, 41, 59, 0.5)',
-        borderRadius: 'var(--radius-xl)',
+        padding: 'var(--space-3)',
+        backgroundColor: 'rgba(30, 41, 59, 0.3)',
+        borderRadius: 'var(--radius-lg)',
         border: '1px solid var(--color-border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 'var(--space-4)',
+        flexWrap: 'wrap',
+        fontSize: 'var(--font-size-sm)',
       }}>
-        <h4 style={{
-          fontSize: 'var(--font-size-sm)',
-          fontWeight: 'var(--font-weight-semibold)',
-          color: 'var(--color-text-secondary)',
-          marginBottom: 'var(--space-3)',
-        }}>
-          Game Rules
-        </h4>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 'var(--space-3)',
-          fontSize: 'var(--font-size-sm)',
-        }}>
-          <div>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-1)' }}>Target</p>
-            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{game.settings.targetScore.toLocaleString()}</p>
-          </div>
-          <div>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-1)' }}>Entry</p>
-            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{game.settings.entryThreshold}</p>
-          </div>
-          <div>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-1)' }}>Timer</p>
-            <p style={{ fontWeight: 'var(--font-weight-medium)' }}>
-              {game.settings.maxTurnTimer === 0 ? 'None' : `${game.settings.maxTurnTimer}s`}
-            </p>
-          </div>
-        </div>
+        <span style={{ color: 'var(--color-text-secondary)' }}>
+          Target: <strong style={{ color: 'var(--color-text)' }}>{game.settings.targetScore.toLocaleString()}</strong>
+        </span>
+        <span style={{ color: 'var(--color-border)' }}>•</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>
+          Entry: <strong style={{ color: 'var(--color-text)' }}>{game.settings.entryThreshold}</strong>
+        </span>
+        <span style={{ color: 'var(--color-border)' }}>•</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>
+          Timer: <strong style={{ color: 'var(--color-text)' }}>{game.settings.maxTurnTimer === 0 ? 'None' : `${game.settings.maxTurnTimer}s`}</strong>
+        </span>
       </section>
 
       {/* ============================================ */}

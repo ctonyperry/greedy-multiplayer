@@ -147,13 +147,15 @@ export function HomeScreen({
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Floating background dice */}
-      <FloatingDie value={1} style={{ left: '5%', top: '15%', animationDelay: '0s' }} />
-      <FloatingDie value={5} style={{ right: '8%', top: '10%', animationDelay: '1s' }} />
-      <FloatingDie value={3} style={{ left: '8%', bottom: '25%', animationDelay: '2s' }} />
-      <FloatingDie value={6} style={{ right: '5%', bottom: '20%', animationDelay: '0.5s' }} />
-      <FloatingDie value={2} style={{ left: '15%', top: '45%', animationDelay: '1.5s' }} />
-      <FloatingDie value={4} style={{ right: '12%', top: '40%', animationDelay: '2.5s' }} />
+      {/* Floating background dice - hidden on small screens */}
+      <div className="hide-mobile">
+        <FloatingDie value={1} style={{ left: '5%', top: '15%', animationDelay: '0s' }} />
+        <FloatingDie value={5} style={{ right: '8%', top: '10%', animationDelay: '1s' }} />
+        <FloatingDie value={3} style={{ left: '8%', bottom: '25%', animationDelay: '2s' }} />
+        <FloatingDie value={6} style={{ right: '5%', bottom: '20%', animationDelay: '0.5s' }} />
+        <FloatingDie value={2} style={{ left: '15%', top: '45%', animationDelay: '1.5s' }} />
+        <FloatingDie value={4} style={{ right: '12%', top: '40%', animationDelay: '2.5s' }} />
+      </div>
 
       {/* Main content */}
       <div style={{
@@ -169,39 +171,9 @@ export function HomeScreen({
         <div style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
 
           {/* Hero dice */}
-          <div style={{ marginBottom: 'var(--space-6)' }}>
+          <div style={{ marginBottom: 'var(--space-5)' }}>
             <HeroDice />
           </div>
-
-          {/* Main headline */}
-          <h2 style={{
-            fontSize: 'clamp(2rem, 8vw, 3.5rem)',
-            fontWeight: 'var(--font-weight-bold)',
-            color: 'var(--color-text)',
-            marginBottom: 'var(--space-3)',
-            lineHeight: 1.1,
-          }}>
-            How <span style={{ color: '#10b981' }}>Greedy</span> Are You?
-          </h2>
-
-          {/* Subheadline */}
-          <p style={{
-            fontSize: 'var(--font-size-lg)',
-            color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--space-2)',
-          }}>
-            Push your luck. Risk it all. Hit <span style={{ color: '#10b981', fontWeight: 'var(--font-weight-semibold)' }}>10,000</span> first.
-          </p>
-
-          {/* Flavor text */}
-          <p style={{
-            fontSize: 'var(--font-size-sm)',
-            color: 'rgba(148, 163, 184, 0.7)',
-            fontStyle: 'italic',
-            marginBottom: 'var(--space-6)',
-          }}>
-            "Just one more roll..." — Everyone who ever busted
-          </p>
 
           {/* Active Games - Resume */}
           {activeGames.length > 0 && onResumeGame && (

@@ -122,7 +122,8 @@ export function CreateGame({ onGameCreated, onCancel }: CreateGameProps) {
         type="button"
         onClick={onClick}
         style={{
-          padding: 'var(--space-4)',
+          padding: 'var(--space-3) var(--space-4)',
+          minHeight: 64,
           borderRadius: 'var(--radius-xl)',
           border: `2px solid ${colors[color].border}`,
           backgroundColor: colors[color].bg,
@@ -215,7 +216,7 @@ export function CreateGame({ onGameCreated, onCancel }: CreateGameProps) {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 'var(--space-3)',
+            gap: 'var(--space-2)',
           }}>
             {TARGET_SCORES.map((option) => (
               <OptionButton
@@ -248,7 +249,7 @@ export function CreateGame({ onGameCreated, onCancel }: CreateGameProps) {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 'var(--space-3)',
+            gap: 'var(--space-2)',
           }}>
             {ENTRY_THRESHOLDS.map((option) => (
               <OptionButton
@@ -282,7 +283,7 @@ export function CreateGame({ onGameCreated, onCancel }: CreateGameProps) {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 'var(--space-3)',
+            gap: 'var(--space-2)',
           }}>
             {TURN_TIMERS.map((option) => (
               <OptionButton
@@ -348,7 +349,8 @@ export function CreateGame({ onGameCreated, onCancel }: CreateGameProps) {
             disabled={isCreating}
             style={{
               flex: 1,
-              padding: 'var(--space-4)',
+              padding: 'var(--space-3)',
+              minHeight: 52,
             }}
           >
             Cancel
@@ -359,7 +361,8 @@ export function CreateGame({ onGameCreated, onCancel }: CreateGameProps) {
             disabled={isCreating}
             style={{
               flex: 1,
-              padding: 'var(--space-4)',
+              padding: 'var(--space-3)',
+              minHeight: 52,
             }}
           >
             {isCreating ? 'Creating...' : 'Create Game'}

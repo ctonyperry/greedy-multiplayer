@@ -223,7 +223,7 @@ function AppContent() {
         </h1>
 
         {/* Header actions */}
-        <div style={{ display: 'flex', gap: 'var(--space-1)', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
           {/* Connection status - show when in game or lobby */}
           {(screen === 'game' || screen === 'lobby') && (
             <ConnectionStatus compact showReconnect />
@@ -246,7 +246,7 @@ function AppContent() {
           <button
             onClick={() => setShowHelp(true)}
             className="btn btn-ghost btn-sm"
-            style={{ minHeight: 40, minWidth: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ minHeight: 44, minWidth: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             aria-label={t('howToPlay')}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -259,7 +259,7 @@ function AppContent() {
             <button
               onClick={handleNewGame}
               className="btn btn-ghost btn-sm"
-              style={{ minHeight: 40, minWidth: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ minHeight: 44, minWidth: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Home"
             >
               <svg
@@ -283,7 +283,7 @@ function AppContent() {
             <button
               onClick={handleSignOut}
               className="btn btn-ghost btn-sm"
-              style={{ minHeight: 40, minWidth: 40, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ minHeight: 44, minWidth: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Sign Out"
               title="Sign Out"
             >

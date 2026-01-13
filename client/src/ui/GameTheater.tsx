@@ -503,10 +503,10 @@ export function GameTheater({
 
       {/* Action Buttons */}
       {isMyTurn && turnPhase !== TurnPhase.ENDED && (
-        <div style={{ padding: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
+        <div style={{ padding: 'var(--space-3) var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
           {/* Carryover choice buttons */}
           {turnPhase === TurnPhase.STEAL_REQUIRED && !currentRoll && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+            <div className="action-buttons-grid" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
               <motion.button
                 onClick={onRoll}
                 disabled={!canRoll}
@@ -514,11 +514,13 @@ export function GameTheater({
                 whileTap={{ scale: 0.98 }}
                 className="btn"
                 style={{
-                  padding: 'var(--space-4)',
+                  padding: 'var(--space-3)',
+                  minHeight: 52,
                   background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
                   color: 'white',
                   border: 'none',
                   fontWeight: 'var(--font-weight-bold)',
+                  fontSize: 'var(--font-size-base)',
                   borderRadius: 'var(--radius-xl)',
                   boxShadow: '0 0 20px rgba(245, 158, 11, 0.3)',
                 }}
@@ -532,10 +534,12 @@ export function GameTheater({
                 whileTap={{ scale: 0.98 }}
                 className="btn"
                 style={{
-                  padding: 'var(--space-4)',
+                  padding: 'var(--space-3)',
+                  minHeight: 52,
                   background: 'rgba(30, 41, 59, 0.5)',
                   border: '2px solid var(--color-border)',
                   borderRadius: 'var(--radius-xl)',
+                  fontSize: 'var(--font-size-base)',
                 }}
               >
                 🛡️ Play Safe
@@ -543,10 +547,10 @@ export function GameTheater({
             </div>
           )}
 
-          {/* Normal action buttons */}
+          {/* Normal action buttons - stacked on mobile */}
           {(turnPhase !== TurnPhase.STEAL_REQUIRED || currentRoll) && (
-            <div style={{ display: 'grid', gridTemplateColumns: canBank || canKeepAndBank ? '1fr 1fr' : '1fr', gap: 'var(--space-3)' }}>
-              {/* Bank button */}
+            <div className="action-buttons-grid" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              {/* Bank button - primary when available */}
               {(canBank || canKeepAndBank) && (
                 <motion.button
                   onClick={canKeepAndBank ? onKeepAndBank : onBank}
@@ -555,11 +559,13 @@ export function GameTheater({
                   whileTap={{ scale: 0.98 }}
                   className="btn"
                   style={{
-                    padding: 'var(--space-4)',
+                    padding: 'var(--space-3)',
+                    minHeight: 52,
                     background: 'linear-gradient(135deg, #10b981, #059669)',
                     color: 'white',
                     border: 'none',
                     fontWeight: 'var(--font-weight-bold)',
+                    fontSize: 'var(--font-size-base)',
                     borderRadius: 'var(--radius-xl)',
                     boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
                   }}
@@ -576,17 +582,23 @@ export function GameTheater({
                 whileTap={canRoll ? { scale: 0.98 } : {}}
                 className="btn"
                 style={{
-                  padding: 'var(--space-4)',
+                  padding: 'var(--space-3)',
+                  minHeight: 52,
                   background: isHotDice
                     ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
-                    : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                    : (canBank || canKeepAndBank)
+                      ? 'rgba(30, 41, 59, 0.5)'
+                      : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                   color: 'white',
-                  border: 'none',
+                  border: (canBank || canKeepAndBank) ? '2px solid var(--color-border)' : 'none',
                   fontWeight: 'var(--font-weight-bold)',
+                  fontSize: 'var(--font-size-base)',
                   borderRadius: 'var(--radius-xl)',
                   boxShadow: isHotDice
                     ? '0 0 20px rgba(245, 158, 11, 0.4)'
-                    : '0 0 20px rgba(59, 130, 246, 0.3)',
+                    : (canBank || canKeepAndBank)
+                      ? 'none'
+                      : '0 0 20px rgba(59, 130, 246, 0.3)',
                   opacity: canRoll ? 1 : 0.5,
                   cursor: canRoll ? 'pointer' : 'not-allowed',
                 }}

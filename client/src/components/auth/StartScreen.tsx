@@ -126,13 +126,15 @@ export function StartScreen() {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Floating background dice */}
-      <FloatingDie value={1} style={{ left: '5%', top: '15%', animationDelay: '0s' }} />
-      <FloatingDie value={5} style={{ right: '8%', top: '10%', animationDelay: '1s' }} />
-      <FloatingDie value={3} style={{ left: '8%', bottom: '25%', animationDelay: '2s' }} />
-      <FloatingDie value={6} style={{ right: '5%', bottom: '20%', animationDelay: '0.5s' }} />
-      <FloatingDie value={2} style={{ left: '15%', top: '45%', animationDelay: '1.5s' }} />
-      <FloatingDie value={4} style={{ right: '12%', top: '40%', animationDelay: '2.5s' }} />
+      {/* Floating background dice - hidden on small screens */}
+      <div className="hide-mobile">
+        <FloatingDie value={1} style={{ left: '5%', top: '15%', animationDelay: '0s' }} />
+        <FloatingDie value={5} style={{ right: '8%', top: '10%', animationDelay: '1s' }} />
+        <FloatingDie value={3} style={{ left: '8%', bottom: '25%', animationDelay: '2s' }} />
+        <FloatingDie value={6} style={{ right: '5%', bottom: '20%', animationDelay: '0.5s' }} />
+        <FloatingDie value={2} style={{ left: '15%', top: '45%', animationDelay: '1.5s' }} />
+        <FloatingDie value={4} style={{ right: '12%', top: '40%', animationDelay: '2.5s' }} />
+      </div>
 
       {/* Main content */}
       <div style={{
