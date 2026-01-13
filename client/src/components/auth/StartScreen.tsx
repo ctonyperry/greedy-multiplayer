@@ -152,36 +152,6 @@ export function StartScreen() {
             <HeroDice />
           </div>
 
-          {/* Main headline */}
-          <h2 style={{
-            fontSize: 'clamp(2rem, 8vw, 3.5rem)',
-            fontWeight: 'var(--font-weight-bold)',
-            color: 'var(--color-text)',
-            marginBottom: 'var(--space-3)',
-            lineHeight: 1.1,
-          }}>
-            How <span style={{ color: '#10b981' }}>Greedy</span> Are You?
-          </h2>
-
-          {/* Subheadline */}
-          <p style={{
-            fontSize: 'var(--font-size-lg)',
-            color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--space-2)',
-          }}>
-            Push your luck. Risk it all. Hit <span style={{ color: '#10b981', fontWeight: 'var(--font-weight-semibold)' }}>10,000</span> first.
-          </p>
-
-          {/* Flavor text */}
-          <p style={{
-            fontSize: 'var(--font-size-sm)',
-            color: 'rgba(148, 163, 184, 0.7)',
-            fontStyle: 'italic',
-            marginBottom: 'var(--space-6)',
-          }}>
-            "Just one more roll..." — Everyone who ever busted
-          </p>
-
           {/* Auth Modal */}
           <AuthModal />
         </div>

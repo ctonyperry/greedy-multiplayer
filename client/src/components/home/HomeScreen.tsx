@@ -4,7 +4,7 @@
  * Based on Figma AI design
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { DieValue } from '../../types/index.js';
 
@@ -116,33 +116,6 @@ function HeroDice() {
   );
 }
 
-// Live indicator with pulse
-function LiveIndicator({ count }: { count: number }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-      <span style={{ position: 'relative', display: 'flex', width: 8, height: 8 }}>
-        <span style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          borderRadius: '50%',
-          backgroundColor: '#10b981',
-          opacity: 0.75,
-          animation: 'ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite',
-        }} />
-        <span style={{
-          position: 'relative',
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          backgroundColor: '#10b981',
-        }} />
-      </span>
-      <span><span style={{ color: '#10b981', fontWeight: 'var(--font-weight-medium)' }}>{count}</span> players online</span>
-    </div>
-  );
-}
-
 interface HomeScreenProps {
   userName?: string;
   onCreateGame: () => void;
@@ -163,9 +136,6 @@ export function HomeScreen({
   onResumeGame,
   onLeaveGame,
 }: HomeScreenProps) {
-  // Simulated live stats (could be real from an API later)
-  const playersOnline = useMemo(() => Math.floor(Math.random() * 80) + 120, []);
-  const activeGameCount = useMemo(() => Math.floor(Math.random() * 25) + 30, []);
 
   const [hoveredButton, setHoveredButton] = useState<'create' | 'join' | null>(null);
 
@@ -394,7 +364,7 @@ export function HomeScreen({
                 color: 'var(--color-text-secondary)',
                 marginTop: 4,
               }}>
-                {hoveredButton === 'join' ? "Show them no mercy" : `${activeGameCount} games in progress`}
+                {hoveredButton === 'join' ? "Show them no mercy" : "Enter a game code"}
               </span>
             </motion.button>
           </div>
@@ -406,9 +376,6 @@ export function HomeScreen({
         @keyframes float {
           0%, 100% { transform: translateY(0) rotate(0deg); }
           50% { transform: translateY(-20px) rotate(8deg); }
-        }
-        @keyframes ping {
-          75%, 100% { transform: scale(2); opacity: 0; }
         }
       `}</style>
     </div>
