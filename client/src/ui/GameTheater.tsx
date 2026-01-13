@@ -560,31 +560,7 @@ export function GameTheater({
           {/* Normal action buttons - stacked on mobile */}
           {(turnPhase !== TurnPhase.STEAL_REQUIRED || currentRoll) && (
             <div className="action-buttons-grid" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {/* Bank button - primary when available */}
-              {(canBank || canKeepAndBank) && (
-                <motion.button
-                  onClick={canKeepAndBank ? onKeepAndBank : onBank}
-                  disabled={!canBank && !canKeepAndBank}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="btn"
-                  style={{
-                    padding: 'var(--space-3)',
-                    minHeight: 52,
-                    background: 'linear-gradient(135deg, #10b981, #059669)',
-                    color: 'white',
-                    border: 'none',
-                    fontWeight: 'var(--font-weight-bold)',
-                    fontSize: 'var(--font-size-base)',
-                    borderRadius: 'var(--radius-xl)',
-                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
-                  }}
-                >
-                  💰 Bank {totalToBank.toLocaleString()}
-                </motion.button>
-              )}
-
-              {/* Roll button */}
+              {/* Roll button - always first */}
               <motion.button
                 onClick={onRoll}
                 disabled={!canRoll}
@@ -615,6 +591,30 @@ export function GameTheater({
               >
                 🎲 {getRollButtonText()}
               </motion.button>
+
+              {/* Bank button */}
+              {(canBank || canKeepAndBank) && (
+                <motion.button
+                  onClick={canKeepAndBank ? onKeepAndBank : onBank}
+                  disabled={!canBank && !canKeepAndBank}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="btn"
+                  style={{
+                    padding: 'var(--space-3)',
+                    minHeight: 52,
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 'var(--font-weight-bold)',
+                    fontSize: 'var(--font-size-base)',
+                    borderRadius: 'var(--radius-xl)',
+                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
+                  }}
+                >
+                  💰 Bank {totalToBank.toLocaleString()}
+                </motion.button>
+              )}
             </div>
           )}
         </div>
