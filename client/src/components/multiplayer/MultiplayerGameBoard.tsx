@@ -398,8 +398,8 @@ export function MultiplayerGameBoard({
         minHeight: '100%',
       }}
     >
-      {/* Timer bar - full width below header (like mockup) */}
-      {effectiveTimeout && effectiveTimeout > 0 && (
+      {/* Timer bar - full width below header (desktop only, mobile shows in turn header) */}
+      {effectiveTimeout && effectiveTimeout > 0 && !isMobile && (
         <div
           style={{
             display: 'flex',
@@ -413,11 +413,7 @@ export function MultiplayerGameBoard({
             backdropFilter: 'blur(8px)',
           }}
         >
-          {isMobile ? (
-            <TurnTimerCompact isMyTurn={isMyTurn} onWarning={handleTimerWarning} />
-          ) : (
-            <TurnTimer isMyTurn={isMyTurn} onWarning={handleTimerWarning} />
-          )}
+          <TurnTimer isMyTurn={isMyTurn} onWarning={handleTimerWarning} />
         </div>
       )}
 
@@ -921,6 +917,9 @@ export function MultiplayerGameBoard({
             isRolling={false}
             isAIActing={(currentPlayer.isAI && isMyTurn) || isCurrentPlayerAIControlled}
             showHints={showHints && isMyTurn}
+            timerElement={isMobile && effectiveTimeout && effectiveTimeout > 0 ? (
+              <TurnTimerCompact isMyTurn={isMyTurn} onWarning={handleTimerWarning} />
+            ) : undefined}
           />
         </div>
       </div>

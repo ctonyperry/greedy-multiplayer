@@ -53,6 +53,7 @@ interface GameTheaterProps {
   isRolling: boolean;
   isAIActing: boolean;
   showHints: boolean;
+  timerElement?: React.ReactNode;
 }
 
 /**
@@ -89,6 +90,7 @@ export function GameTheater({
   isRolling,
   isAIActing,
   showHints,
+  timerElement,
 }: GameTheaterProps) {
   // Calculate dead dice for dimming
   const deadDiceIndices = useMemo(() => {
@@ -229,7 +231,7 @@ export function GameTheater({
           )}
         </h2>
 
-        {/* Turn score with entry progress (compact) */}
+        {/* Turn score with timer and entry progress (compact) */}
         {isMyTurn && turnPhase !== TurnPhase.ENDED && (
           <div
             style={{
@@ -246,6 +248,14 @@ export function GameTheater({
             <span>
               Turn score: <strong style={{ color: 'var(--color-text)' }}>{(turnScore + selectionScore).toLocaleString()}</strong>
             </span>
+
+            {/* Timer - inline on mobile */}
+            {timerElement && (
+              <>
+                <span style={{ color: 'var(--color-border)' }}>•</span>
+                {timerElement}
+              </>
+            )}
 
             {/* Carryover pot indicator */}
             {hasCarryover && !carryoverClaimed && carryoverPoints > 0 && (
