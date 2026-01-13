@@ -194,7 +194,7 @@ export function GameTheater({
       {/* Header - Player name, turn score, and entry progress */}
       <header
         style={{
-          padding: 'var(--space-4)',
+          padding: 'var(--space-3)',
           textAlign: 'center',
           borderBottom: '1px solid var(--color-border)',
           background: isBust
@@ -345,7 +345,7 @@ export function GameTheater({
       </header>
 
       {/* Dice Area */}
-      <div style={{ padding: 'var(--space-4)', flex: 1, overflow: 'hidden' }}>
+      <div style={{ padding: 'var(--space-3)', flex: 1, overflow: 'hidden' }}>
         <div
           style={{
             display: 'flex',
@@ -415,12 +415,12 @@ export function GameTheater({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 'clamp(4px, 1vw, var(--space-2))',
-                marginTop: 'var(--space-3)',
-                padding: 'var(--space-3)',
+                gap: 'clamp(2px, 1vw, var(--space-2))',
+                marginTop: 'var(--space-2)',
+                padding: 'var(--space-2)',
                 background: 'rgba(16, 185, 129, 0.1)',
                 border: '1px solid rgba(16, 185, 129, 0.2)',
-                borderRadius: 'var(--radius-xl)',
+                borderRadius: 'var(--radius-lg)',
                 maxWidth: '100%',
                 overflowX: 'auto',
                 flexWrap: 'nowrap',
@@ -434,7 +434,7 @@ export function GameTheater({
                   key={`selected-${index}`}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  style={{ transform: 'scale(0.7)', flexShrink: 0 }}
+                  style={{ transform: 'scale(0.6)', flexShrink: 0, margin: '-4px' }}
                 >
                   <Die
                     value={currentRoll[index]}
@@ -476,10 +476,10 @@ export function GameTheater({
                 justifyContent: 'flex-start',
                 gap: 'clamp(2px, 0.5vw, var(--space-2))',
                 marginTop: 'var(--space-2)',
-                padding: 'var(--space-3)',
+                padding: 'var(--space-2)',
                 background: 'rgba(30, 41, 59, 0.7)',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-xl)',
+                borderRadius: 'var(--radius-lg)',
                 maxWidth: '100%',
                 flexWrap: 'wrap',
               }}
