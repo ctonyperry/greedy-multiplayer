@@ -251,8 +251,8 @@ export function MultiplayerGameBoard({
       // Keep dice, then automatically roll
       keep(selectedDice);
       setSelectedIndices([]);
-      // Send roll after a short delay to let server process keep
-      setTimeout(() => roll(), 150);
+      // Send roll after delay to let server save to Cosmos DB
+      setTimeout(() => roll(), 500);
     } else {
       // No selection or in DECIDING/ROLLING phase - just roll
       roll();
@@ -282,8 +282,8 @@ export function MultiplayerGameBoard({
     keep(selectedDice);
     setSelectedIndices([]);
 
-    // After keep is processed, bank
-    setTimeout(() => bank(), 100);
+    // After keep is processed, bank (delay for Cosmos DB save)
+    setTimeout(() => bank(), 500);
   }, [selectedIndices, turn?.currentRoll, isMyTurn, keep, bank]);
 
   // Handle forfeit
