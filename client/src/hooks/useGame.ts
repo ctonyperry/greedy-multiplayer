@@ -61,6 +61,7 @@ interface UseGameReturn {
   roll: () => void;
   keep: (dice: number[]) => void;
   bank: () => void;
+  keepAndBank: (dice: number[]) => void;
   declineCarryover: () => void;
   sendChat: (message: string) => void;
 
@@ -316,6 +317,14 @@ export function useGame(gameCode: string): UseGameReturn {
     sendAction(gameCodeRef.current, { type: 'BANK' });
   }, [isMyTurn, sendAction]);
 
+  const keepAndBank = useCallback(
+    (dice: number[]) => {
+      if (!isMyTurn) return;
+      sendAction(gameCodeRef.current, { type: 'KEEP_AND_BANK', dice });
+    },
+    [isMyTurn, sendAction]
+  );
+
   const declineCarryover = useCallback(() => {
     if (!isMyTurn) return;
     sendAction(gameCodeRef.current, { type: 'DECLINE_CARRYOVER' });
@@ -346,6 +355,7 @@ export function useGame(gameCode: string): UseGameReturn {
     roll,
     keep,
     bank,
+    keepAndBank,
     declineCarryover,
     sendChat: handleSendChat,
     refreshState: fetchGameState,

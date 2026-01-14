@@ -17,6 +17,7 @@ export type GameAction =
   | { type: 'ROLL'; dice: Dice }
   | { type: 'KEEP'; dice: Dice }
   | { type: 'BANK' }
+  | { type: 'KEEP_AND_BANK'; dice: Dice }
   | { type: 'END_TURN' }
   | { type: 'DECLINE_CARRYOVER' };
 
@@ -185,6 +186,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         turn: newTurn,
+        carryoverPot: carryover,
+      };
+    }
+
+    case 'KEEP_AND_BANK': {
+      // Compound action: KEEP dice, then BANK - handled atomically to avoid race conditions
+      // First apply KEEP
+      const turnAction: TurnAction = { type: 'KEEP', dice: action.dice };
+      const turnAfterKeep = turnReducer(state.turn, turnAction);
+
+      // Create intermediate state after KEEP
+      const stateAfterKeep: GameState = {
+        ...state,
+        turn: turnAfterKeep,
+      };
+
+      // Now check if banking is allowed with the updated state
+      const playerAfterKeep = stateAfterKeep.players[stateAfterKeep.currentPlayerIndex];
+      if (!canBank(turnAfterKeep, playerAfterKeep.isOnBoard, stateAfterKeep.entryThreshold)) {
+        throw new Error('Cannot bank: requirements not met');
+      }
+
+      // Calculate carryover before ending turn
+      const carryover = getCarryoverPot(turnAfterKeep);
+
+      // Apply bank action to turn
+      const finalTurn = turnReducer(turnAfterKeep, { type: 'BANK' });
+
+      return {
+        ...stateAfterKeep,
+        turn: finalTurn,
         carryoverPot: carryover,
       };
     }

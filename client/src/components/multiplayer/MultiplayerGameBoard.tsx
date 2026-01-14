@@ -50,6 +50,7 @@ export function MultiplayerGameBoard({
     roll,
     keep,
     bank,
+    keepAndBank,
     declineCarryover,
   } = useGame(gameCode);
 
@@ -274,17 +275,14 @@ export function MultiplayerGameBoard({
     setSelectedIndices([]);
   }, [turn?.phase, isMyTurn, declineCarryover]);
 
-  // Handle keep and bank
+  // Handle keep and bank - uses atomic KEEP_AND_BANK action to avoid race conditions
   const handleKeepAndBank = useCallback(() => {
     if (selectedIndices.length === 0 || !turn?.currentRoll || !isMyTurn) return;
 
     const selectedDice = selectedIndices.map((i) => turn.currentRoll![i]);
-    keep(selectedDice);
+    keepAndBank(selectedDice);
     setSelectedIndices([]);
-
-    // After keep is processed, bank (delay for Cosmos DB save)
-    setTimeout(() => bank(), 500);
-  }, [selectedIndices, turn?.currentRoll, isMyTurn, keep, bank]);
+  }, [selectedIndices, turn?.currentRoll, isMyTurn, keepAndBank]);
 
   // Handle forfeit
   const handleForfeit = useCallback(async () => {
