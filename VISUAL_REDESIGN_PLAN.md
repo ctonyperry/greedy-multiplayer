@@ -2,7 +2,7 @@
 
 ## Overview
 
-Apply the visual design language from the Figma export (`/Users/tperry/Downloads/Redesign Login Flow/`) to the existing Greedy Dice Game application. This plan focuses **purely on look and feel** - all game mechanics and functionality remain unchanged.
+Apply the visual design language from the Figma design to the existing Greedy Dice Game application. This plan focuses **purely on look and feel** - all game mechanics and functionality remain unchanged.
 
 ---
 

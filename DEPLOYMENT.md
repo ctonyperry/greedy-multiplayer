@@ -7,7 +7,7 @@ This document covers how to deploy both the frontend (client) and backend (serve
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         FRONTEND                                 │
-│  Azure Static Web Apps (getgreedy.io)                           │
+│  Azure Static Web Apps                                          │
 │  - Auto-deploys on push to main                                 │
 │  - GitHub Actions workflow                                       │
 └─────────────────────────────────────────────────────────────────┘
@@ -15,7 +15,7 @@ This document covers how to deploy both the frontend (client) and backend (serve
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                         BACKEND                                  │
-│  Azure App Service (greedytp-api-dev.azurewebsites.net)         │
+│  Azure App Service                                               │
 │  - Manual deployment via script                                  │
 │  - WebSocket support for real-time game updates                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -45,7 +45,7 @@ git push origin main
 1. GitHub Actions runs `.github/workflows/deploy.yml`
 2. Builds the client with production environment variables
 3. Deploys to Azure Static Web Apps
-4. Live at https://getgreedy.io within ~2 minutes
+4. Live within ~2 minutes
 
 ### Manual Deployment
 
@@ -55,8 +55,8 @@ If you need to deploy manually or the GitHub Action fails:
 cd client
 
 # Build with production environment
-VITE_API_URL=https://greedytp-api-dev.azurewebsites.net/api \
-VITE_SOCKET_URL=https://greedytp-api-dev.azurewebsites.net \
+VITE_API_URL=https://<your-app-service>.azurewebsites.net/api \
+VITE_SOCKET_URL=https://<your-app-service>.azurewebsites.net \
 npm run build
 
 # Deploy using Azure CLI (requires SWA CLI)
@@ -66,12 +66,12 @@ swa deploy ./dist --env production
 
 ### Environment Variables
 
-The frontend build uses these environment variables (set in GitHub Actions):
+The frontend build uses these environment variables (set as GitHub Secrets):
 
-| Variable | Production Value |
-|----------|-----------------|
-| `VITE_API_URL` | `https://greedytp-api-dev.azurewebsites.net/api` |
-| `VITE_SOCKET_URL` | `https://greedytp-api-dev.azurewebsites.net` |
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Backend API URL (e.g., `https://<app-name>.azurewebsites.net/api`) |
+| `VITE_SOCKET_URL` | Backend WebSocket URL (e.g., `https://<app-name>.azurewebsites.net`) |
 
 ### Monitoring Frontend Deployment
 
@@ -91,6 +91,10 @@ gh run watch
 
 ```bash
 cd server
+
+# Set required environment variables
+export AZURE_WEBAPP_NAME=<your-app-name>
+export AZURE_RESOURCE_GROUP=<your-resource-group>
 
 # Full deploy (build + deploy)
 npm run deploy
@@ -135,15 +139,15 @@ zip -r server-deploy.zip dist/ node_modules/ package.json package-lock.json
 
 # 4. Deploy to Azure
 az webapp deploy \
-  --resource-group greedy-rg-central \
-  --name greedytp-api-dev \
+  --resource-group <your-resource-group> \
+  --name <your-app-name> \
   --src-path server-deploy.zip \
   --type zip \
   --clean true \
   --restart true
 
 # 5. Verify health
-curl https://greedytp-api-dev.azurewebsites.net/health
+curl https://<your-app-name>.azurewebsites.net/health
 ```
 
 ### Environment Variables
@@ -164,8 +168,8 @@ To update environment variables:
 
 ```bash
 az webapp config appsettings set \
-  --resource-group greedy-rg-central \
-  --name greedytp-api-dev \
+  --resource-group <your-resource-group> \
+  --name <your-app-name> \
   --settings KEY=value
 ```
 
@@ -173,13 +177,13 @@ az webapp config appsettings set \
 
 ```bash
 # Stream live logs
-az webapp log tail -g greedy-rg-central -n greedytp-api-dev
+az webapp log tail -g <your-resource-group> -n <your-app-name>
 
 # View recent logs
-az webapp log download -g greedy-rg-central -n greedytp-api-dev
+az webapp log download -g <your-resource-group> -n <your-app-name>
 
 # Check app status
-az webapp show -g greedy-rg-central -n greedytp-api-dev --query state
+az webapp show -g <your-resource-group> -n <your-app-name> --query state
 ```
 
 ---
@@ -223,22 +227,22 @@ gh run view --log-failed
 az account show
 
 # Check webapp exists
-az webapp show -g greedy-rg-central -n greedytp-api-dev
+az webapp show -g <your-resource-group> -n <your-app-name>
 ```
 
 **App not starting after deploy:**
 ```bash
 # Check logs for errors
-az webapp log tail -g greedy-rg-central -n greedytp-api-dev
+az webapp log tail -g <your-resource-group> -n <your-app-name>
 
 # Restart the app
-az webapp restart -g greedy-rg-central -n greedytp-api-dev
+az webapp restart -g <your-resource-group> -n <your-app-name>
 ```
 
 **Health check fails:**
 ```bash
 # Check if app is running
-curl -v https://greedytp-api-dev.azurewebsites.net/health
+curl -v https://<your-app-name>.azurewebsites.net/health
 
 # Check CORS configuration (in server/src/index.ts)
 # Ensure your domain is in allowedOrigins
@@ -249,20 +253,8 @@ curl -v https://greedytp-api-dev.azurewebsites.net/health
 ```bash
 # Check Cosmos DB connection from Azure portal
 # Or test with Azure CLI
-az cosmosdb show -g greedy-rg-central -n <cosmos-account-name>
+az cosmosdb show -g <your-resource-group> -n <cosmos-account-name>
 ```
-
----
-
-## URLs
-
-| Environment | URL |
-|-------------|-----|
-| Frontend (Production) | https://getgreedy.io |
-| Frontend (Azure) | https://jolly-moss-0adeb2b10.1.azurestaticapps.net |
-| Backend API | https://greedytp-api-dev.azurewebsites.net/api |
-| Backend WebSocket | wss://greedytp-api-dev.azurewebsites.net |
-| Backend Health | https://greedytp-api-dev.azurewebsites.net/health |
 
 ---
 
@@ -273,10 +265,12 @@ az cosmosdb show -g greedy-rg-central -n <cosmos-account-name>
 git push origin main
 
 # Deploy backend
+export AZURE_WEBAPP_NAME=<your-app-name>
+export AZURE_RESOURCE_GROUP=<your-resource-group>
 cd server && npm run deploy
 
 # View backend logs
-az webapp log tail -g greedy-rg-central -n greedytp-api-dev
+az webapp log tail -g <your-resource-group> -n <your-app-name>
 
 # Check deployment status
 gh run list

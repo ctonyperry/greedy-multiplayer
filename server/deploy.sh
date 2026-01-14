@@ -7,16 +7,16 @@
 #   - Azure CLI installed and logged in (az login)
 #   - Node.js and npm installed
 #
-# Environment variables (optional):
-#   AZURE_WEBAPP_NAME - App Service name (default: greedytp-api-dev)
-#   AZURE_RESOURCE_GROUP - Resource group (default: greedy-rg-central)
+# Environment variables (required):
+#   AZURE_WEBAPP_NAME - App Service name (e.g., my-app-dev)
+#   AZURE_RESOURCE_GROUP - Resource group (e.g., my-resource-group)
 #
 
 set -e  # Exit on error
 
 # Configuration
-WEBAPP_NAME="${AZURE_WEBAPP_NAME:-greedytp-api-dev}"
-RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-greedy-rg-central}"
+WEBAPP_NAME="${AZURE_WEBAPP_NAME:?Environment variable AZURE_WEBAPP_NAME is required}"
+RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:?Environment variable AZURE_RESOURCE_GROUP is required}"
 DEPLOY_ZIP="server-deploy.zip"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

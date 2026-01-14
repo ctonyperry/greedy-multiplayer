@@ -32,8 +32,8 @@ jobs:
 
       - name: Build client
         env:
-          VITE_API_URL: https://greedytp-api-dev.azurewebsites.net/api
-          VITE_SOCKET_URL: https://greedytp-api-dev.azurewebsites.net
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
         run: cd client && npm run build
 
       - name: Deploy to Static Web App

@@ -37,7 +37,6 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://getgreedy.io',
   'https://www.getgreedy.io',
-  'https://jolly-moss-0adeb2b10.1.azurestaticapps.net',
   process.env.CLIENT_URL,
 ].filter(Boolean) as string[];
 
