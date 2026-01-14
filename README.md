@@ -30,14 +30,15 @@ A full-stack multiplayer implementation of the classic "Greedy" (also known as "
 
 ### Infrastructure
 - **Azure Static Web Apps** for frontend hosting
-- **Azure App Service** for backend API
+- **Fly.io** for backend API (free tier with WebSocket support)
+- **Azure Cosmos DB** for game state persistence
 - **GitHub Actions** for CI/CD pipelines
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT                                   │
+│                     CLIENT (Azure Static Web Apps)               │
 │  React + TypeScript + Vite                                       │
 │  - Game UI with dice animations                                  │
 │  - Real-time state synchronization                               │
@@ -46,7 +47,7 @@ A full-stack multiplayer implementation of the classic "Greedy" (also known as "
                              │ WebSocket + REST
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                         SERVER                                   │
+│                       SERVER (Fly.io)                            │
 │  Node.js + Express + Socket.IO                                   │
 │  - Game logic and validation                                     │
 │  - Turn management and scoring                                   │
@@ -55,8 +56,7 @@ A full-stack multiplayer implementation of the classic "Greedy" (also known as "
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                        DATABASE                                  │
-│  Azure Cosmos DB                                                 │
+│                   DATABASE (Azure Cosmos DB)                     │
 │  - Game state persistence                                        │
 │  - Player sessions                                               │
 └─────────────────────────────────────────────────────────────────┘

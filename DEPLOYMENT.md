@@ -15,9 +15,10 @@ This document covers how to deploy both the frontend (client) and backend (serve
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                         BACKEND                                  │
-│  Azure App Service                                               │
-│  - Manual deployment via script                                  │
+│  Fly.io                                                          │
+│  - Manual deployment via flyctl                                  │
 │  - WebSocket support for real-time game updates                 │
+│  - Auto-scales to zero when idle (free tier)                    │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -47,31 +48,14 @@ git push origin main
 3. Deploys to Azure Static Web Apps
 4. Live within ~2 minutes
 
-### Manual Deployment
-
-If you need to deploy manually or the GitHub Action fails:
-
-```bash
-cd client
-
-# Build with production environment
-VITE_API_URL=https://<your-app-service>.azurewebsites.net/api \
-VITE_SOCKET_URL=https://<your-app-service>.azurewebsites.net \
-npm run build
-
-# Deploy using Azure CLI (requires SWA CLI)
-npm install -g @azure/static-web-apps-cli
-swa deploy ./dist --env production
-```
-
 ### Environment Variables
 
 The frontend build uses these environment variables (set as GitHub Secrets):
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | Backend API URL (e.g., `https://<app-name>.azurewebsites.net/api`) |
-| `VITE_SOCKET_URL` | Backend WebSocket URL (e.g., `https://<app-name>.azurewebsites.net`) |
+| `VITE_API_URL` | Backend API URL (`https://greedy-api.fly.dev/api`) |
+| `VITE_SOCKET_URL` | Backend WebSocket URL (`https://greedy-api.fly.dev`) |
 
 ### Monitoring Frontend Deployment
 
@@ -87,103 +71,114 @@ gh run watch
 
 ## Backend Deployment
 
-### Quick Start
-
-```bash
-cd server
-
-# Set required environment variables
-export AZURE_WEBAPP_NAME=<your-app-name>
-export AZURE_RESOURCE_GROUP=<your-resource-group>
-
-# Full deploy (build + deploy)
-npm run deploy
-
-# Quick deploy (skip build if dist/ is current)
-npm run deploy:quick
-```
-
-### What the Deploy Script Does
-
-1. **Install dependencies** - `npm ci --omit=dev` (production only)
-2. **Build TypeScript** - Compiles `src/` to `dist/`
-3. **Create package** - Zips `dist/`, `node_modules/`, `package.json`
-4. **Deploy to Azure** - Uploads with `--clean true` flag
-5. **Health check** - Verifies the app is running
+The backend runs on [Fly.io](https://fly.io), a platform with a generous free tier that supports WebSockets.
 
 ### Prerequisites
 
-- Azure CLI installed and logged in (`az login`)
-- Node.js 20+ and npm installed
+1. Install the Fly CLI:
+   ```bash
+   curl -L https://fly.io/install.sh | sh
+   ```
 
-```bash
-# Verify Azure CLI is logged in
-az account show
-```
+2. Log in to Fly.io:
+   ```bash
+   flyctl auth login
+   ```
 
-### Manual Deployment Steps
-
-If you prefer to run steps manually:
+### Deploy
 
 ```bash
 cd server
 
-# 1. Install production dependencies
-npm ci --omit=dev
-
-# 2. Build TypeScript
+# Build TypeScript
 npm run build
 
-# 3. Create deployment zip
-zip -r server-deploy.zip dist/ node_modules/ package.json package-lock.json
-
-# 4. Deploy to Azure
-az webapp deploy \
-  --resource-group <your-resource-group> \
-  --name <your-app-name> \
-  --src-path server-deploy.zip \
-  --type zip \
-  --clean true \
-  --restart true
-
-# 5. Verify health
-curl https://<your-app-name>.azurewebsites.net/health
+# Deploy to Fly.io
+flyctl deploy
 ```
 
-### Environment Variables
+That's it! The deployment typically takes ~30 seconds.
 
-Backend environment variables are configured in Azure App Service:
+### Configuration
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Server port (set by Azure) |
-| `COSMOS_ENDPOINT` | Azure Cosmos DB endpoint |
-| `COSMOS_KEY` | Azure Cosmos DB key |
-| `FIREBASE_*` | Firebase Admin SDK credentials |
-| `CLIENT_URL` | Allowed CORS origin |
-| `SCM_DO_BUILD_DURING_DEPLOYMENT` | `false` (we pre-build) |
-| `ENABLE_ORYX_BUILD` | `false` (we pre-build) |
+The backend configuration is in `server/fly.toml`:
 
-To update environment variables:
+```toml
+app = 'greedy-api'
+primary_region = 'sjc'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'    # Scales to zero when idle
+  auto_start_machines = true     # Wakes on incoming request
+  min_machines_running = 0
+
+[env]
+  PORT = '8080'
+  NODE_ENV = 'production'
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
+```
+
+### Environment Variables (Secrets)
+
+Secrets are managed via Fly.io:
 
 ```bash
-az webapp config appsettings set \
-  --resource-group <your-resource-group> \
-  --name <your-app-name> \
-  --settings KEY=value
+# View current secrets
+flyctl secrets list --app greedy-api
+
+# Set a secret
+flyctl secrets set KEY=value --app greedy-api
 ```
+
+Required secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `COSMOS_CONNECTION` | Azure Cosmos DB connection string |
+| `FIREBASE_PROJECT_ID` | Firebase project ID |
+| `FIREBASE_CLIENT_EMAIL` | Firebase service account email |
+| `FIREBASE_PRIVATE_KEY` | Firebase service account private key |
+| `CLIENT_URL` | Allowed CORS origin (e.g., `https://getgreedy.io`) |
 
 ### Viewing Logs
 
 ```bash
 # Stream live logs
-az webapp log tail -g <your-resource-group> -n <your-app-name>
+flyctl logs --app greedy-api
 
 # View recent logs
-az webapp log download -g <your-resource-group> -n <your-app-name>
+flyctl logs --app greedy-api -n 100
+```
 
+### Monitoring
+
+```bash
 # Check app status
-az webapp show -g <your-resource-group> -n <your-app-name> --query state
+flyctl status --app greedy-api
+
+# View machines
+flyctl machines list --app greedy-api
+
+# Open Fly.io dashboard
+flyctl dashboard --app greedy-api
+```
+
+### Scaling
+
+The app auto-scales to zero when idle and wakes on incoming requests (~2-3 second cold start). To keep it always running:
+
+```bash
+# Edit fly.toml and set:
+# min_machines_running = 1
+
+# Then redeploy
+flyctl deploy
 ```
 
 ---
@@ -221,40 +216,55 @@ gh run view --log-failed
 
 ### Backend Issues
 
-**Deploy script fails:**
+**Deploy fails:**
 ```bash
-# Check Azure CLI is logged in
-az account show
+# Check Fly.io status
+flyctl status --app greedy-api
 
-# Check webapp exists
-az webapp show -g <your-resource-group> -n <your-app-name>
+# View deployment logs
+flyctl logs --app greedy-api
 ```
 
-**App not starting after deploy:**
+**App not responding:**
 ```bash
-# Check logs for errors
-az webapp log tail -g <your-resource-group> -n <your-app-name>
+# Check if machines are running
+flyctl machines list --app greedy-api
 
 # Restart the app
-az webapp restart -g <your-resource-group> -n <your-app-name>
+flyctl apps restart greedy-api
 ```
 
 **Health check fails:**
 ```bash
-# Check if app is running
-curl -v https://<your-app-name>.azurewebsites.net/health
+# Test health endpoint
+curl https://greedy-api.fly.dev/health
 
-# Check CORS configuration (in server/src/index.ts)
-# Ensure your domain is in allowedOrigins
+# Check logs for errors
+flyctl logs --app greedy-api
 ```
+
+**WebSocket connection issues:**
+- Verify CSP in `client/public/staticwebapp.config.json` includes `*.fly.dev`
+- Check CORS origins in `server/src/index.ts`
 
 ### Database Issues
 
 ```bash
 # Check Cosmos DB connection from Azure portal
-# Or test with Azure CLI
-az cosmosdb show -g <your-resource-group> -n <cosmos-account-name>
+# Verify COSMOS_CONNECTION secret is set correctly
+flyctl secrets list --app greedy-api
 ```
+
+---
+
+## URLs
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://getgreedy.io |
+| Backend API | https://greedy-api.fly.dev/api |
+| Backend WebSocket | wss://greedy-api.fly.dev |
+| Backend Health | https://greedy-api.fly.dev/health |
 
 ---
 
@@ -265,12 +275,10 @@ az cosmosdb show -g <your-resource-group> -n <cosmos-account-name>
 git push origin main
 
 # Deploy backend
-export AZURE_WEBAPP_NAME=<your-app-name>
-export AZURE_RESOURCE_GROUP=<your-resource-group>
-cd server && npm run deploy
+cd server && npm run build && flyctl deploy
 
 # View backend logs
-az webapp log tail -g <your-resource-group> -n <your-app-name>
+flyctl logs --app greedy-api
 
 # Check deployment status
 gh run list
