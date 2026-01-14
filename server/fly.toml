@@ -11,6 +11,11 @@ primary_region = 'sjc'
   min_machines_running = 0
   processes = ['app']
 
+# Single machine - game state is in-memory, can't be shared across machines
+# This disables the default HA behavior that creates 2 machines
+[deploy]
+  strategy = 'immediate'
+
 [env]
   PORT = '8080'
   NODE_ENV = 'production'
